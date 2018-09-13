@@ -102,6 +102,7 @@ while _step * batch < max_iter:
         pass
 
     frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=batch,stops=stops)
+    # print frame_minibatch
     solver.net.blobs['data'].data[...] = frame_minibatch
     solver.net.blobs['gt'].data[...] = density_minibatch
     solver.step(1)

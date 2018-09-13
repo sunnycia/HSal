@@ -31,7 +31,7 @@ class L1LossLayer(caffe.Layer):
         self.diff[...] = np.logical_xor((0. < diff), (diff < 0.))
 
         # compute loss:
-        print np.mean(np.abs(diff))
+        # print np.mean(np.abs(diff))
         top[0].data[...] = np.mean(np.abs(diff))
 
     def backward(self, top, propagate_down, bottom):
@@ -173,6 +173,7 @@ class BDistLayer(caffe.Layer):
         # check input pair
         if len(bottom) != 2:
             raise Exception("Need two inputs (pred, gt) to compute loss.")
+        print 'setup'
 
     def reshape(self, bottom, top):
         # difference is shape of prediction
@@ -197,15 +198,17 @@ class BDistLayer(caffe.Layer):
         prod_sqrt     = np.sqrt(yp * y)
         prod_sqrt_sum = np.sum(prod_sqrt)
         loss          = -np.log(np.maximum(prod_sqrt_sum,epsilon))
-        # print yp, y, prod_sqrt_sum, epsilon, loss
         # compute combined loss
         top[0].data[...] = loss
 
         # compute diffs:
         # pdb.set_trace()
         const = -0.5 / prod_sqrt_sum
+        # print yp, y#, prod_sqrt_sum, epsilon, loss
         self.diff[...] = const * ((prod_sqrt_sum - prod_sqrt) * yp - prod_sqrt * (1 - yp))
 
     def backward(self, top, propagate_down, bottom):
+
         loss_wgt = top[0].diff
+        print loss_wgt
         bottom[0].diff[...] = loss_wgt * self.diff / bottom[0].num
