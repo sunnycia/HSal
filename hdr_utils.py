@@ -2,9 +2,9 @@ import os
 import imageio 
 import numpy as np
 import cv2
-
+import time
 import shutil
-
+import uuid
 def lum(rgb):
     if len(rgb.shape)==2:
         return rgb
@@ -57,8 +57,8 @@ def split(hdr, gamma_diplay=2.2, viz=False,stops=10,method='naive'):
         print n,bins
         plt.show()
 
-    timestamp= str(time.time())
-    tmp_dir = './tmp_'+timestamp
+    uid= uuid.uuid4()
+    tmp_dir = './tmp_'+str(uid)
     if not os.path.isdir(tmp_dir):
         os.mkdir(tmp_dir)
     newimg_list = []

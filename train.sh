@@ -1,5 +1,5 @@
 #!/usr/bin/sh
-GPU=4
+GPU=7
 export CUDA_VISIBLE_DEVICES=$GPU
 
 SOLVER=prototxt/solver.prototxt
@@ -16,7 +16,7 @@ HEIGHT=384
 WIDTH=512
 BATCH=8
 STOPS=3
-LOSS=L2LossLayer
+LOSS=BDistLayer
 DS_NAME=salicon
 
 # Training setting variable
