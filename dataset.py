@@ -106,5 +106,5 @@ class ImageDataset():
 
             density = self.pre_process_img(density, greyscale=True)
             batch_density_list.append(density)
-
+        
         return np.array(batch_frame_list), np.array(batch_density_list)

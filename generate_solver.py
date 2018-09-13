@@ -3,7 +3,8 @@ import caffe
 import datetime
 from argparse import ArgumentParser
 
-def write_sovler(solver_path,
+
+def write_solver(solver_path,
                  net_path, 
                  snapshot_dir):
 
@@ -11,12 +12,7 @@ def write_sovler(solver_path,
     sovler_string = caffe.proto.caffe_pb2.SolverParameter() 
     solver_file = my_project_root + solver_path
     sovler_string.train_net = my_project_root + net_path
-    # now = datetime.datetime.now()
-    # time_list = [now.year, now.month, now.day, now.hour, now.minute,now.second]
-    # time_str = ''
-    # for i in time_list:
-    #     time_str += '_'+str(i)
-    # snapshot_path = os.path.join(snapshot_dir, time_str)
+
     if not os.path.isdir(snapshot_dir):
         os.makedirs(snapshot_dir)
     sovler_string.snapshot_prefix = snapshot_dir+'/snapshot_'
@@ -30,9 +26,6 @@ def write_sovler(solver_path,
     sovler_string.display = 50
     sovler_string.max_iter = 1000000
     sovler_string.snapshot = 5000
-    # sovler_string.snapshot_format = 0
-    
-    
     sovler_string.solver_mode = caffe.proto.caffe_pb2.SolverParameter.GPU  
 
     with open(solver_file, 'w') as f:
@@ -45,7 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('--snapshot_dir', type=str)
     args = parser.parse_args()
 
-    # write_sovler(snapshot_dir='snapshot/basic_v1/')
-    write_sovler(solver_path=args.solver_path,
+    # write_solver(snapshot_dir='snapshot/basic_v1/')
+    write_solver(solver_path=args.solver_path,
                  net_path=args.network_path, 
                  snapshot_dir=args.snapshot_dir)

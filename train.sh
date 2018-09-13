@@ -1,5 +1,5 @@
 #!/usr/bin/sh
-GPU=7
+GPU=4
 export CUDA_VISIBLE_DEVICES=$GPU
 
 SOLVER=prototxt/solver.prototxt
@@ -16,7 +16,7 @@ HEIGHT=384
 WIDTH=512
 BATCH=8
 STOPS=3
-LOSS=BDistLayer
+LOSS=L2LossLayer
 DS_NAME=salicon
 
 # Training setting variable
@@ -27,8 +27,11 @@ EPOCH=100
 
 python generate_net.py --depth=50 --output=$NET --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --loss=$LOSS
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
+
 python generate_solver.py --network_path=$NET --solver_path=$SOLVER --snapshot_dir=$SNAPSHOT
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 
+python generate_solver.py --network_path=$NET --solver_path=$SOLVER --snapshot_dir=$SNAPSHOT
+rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 
-python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --dsname=$DS_NAME --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --debug
+python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --dsname=$DS_NAME --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL
