@@ -4,3 +4,5 @@ salicon-evaluation
 cd_Saliency_PDP
 *.pyc
 *.prototxt
+*.caffemodel
+*.solverstate

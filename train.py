@@ -17,9 +17,10 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--solver', type=str, default='prototxt/solver.prototxt', help='the solver prototxt')
     parser.add_argument('--network', type=str, default='prototxt/train.prototxt', help='the network prototxt')
+    parser.add_argument('--pretrained_model', type=str, help='pretrained model.')
     # parser.add_argument('--use_snapshot', type=str, default='', help='Snapshot path.')
     parser.add_argument('--dsname', type=str, default='salicon', help='training dataset')
-    # parser.add_argument('--debug', type=bool, default=False, help='If debug is ture, a mini set will run into training.Or a complete set will.')
+    parser.add_argument('--debug', action='store_true', default=False, help='If debug is ture, a mini set will run into training.Or a complete set will.')
     # parser.add_argument('--visualization', type=bool, default=False, help='visualization training loss option')
 
     parser.add_argument('--snapshot', type=str, help='model save path')
@@ -29,7 +30,7 @@ def get_arguments():
     parser.add_argument('--height', type=int, help='training image height')
 
 
-    parser.add_argument('--max_iter', type=int, help='maximum training iteration')
+    parser.add_argument('--max_epoch', type=int, help='maximum epoch iteration')
     parser.add_argument('--val_iter', type=int, help='validation iter')
     parser.add_argument('--plt_iter', type=int, help='plot iter')
 
@@ -81,11 +82,16 @@ if args.dsname == 'salicon':
     validation_frame_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/images'
     validation_density_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/density'
 
-tranining_dataset = ImageDataset(frame_basedir=train_frame_basedir, density_basedir=train_density_basedir, img_size=(width, height))
+tranining_dataset = ImageDataset(frame_basedir=train_frame_basedir, density_basedir=train_density_basedir, img_size=(width, height), debug=args.debug)
 
-max_iter = args.max_iter
-validation_iter = args.val_iter
-plot_iter = args.plt_iter
+if args.debug:
+    max_epoch=10
+    validation_iter=50
+    plot_iter=25
+else:
+    max_epoch = args.max_epoch
+    validation_iter = args.val_iter
+    plot_iter = args.plt_iter
 
 idx_counter = 0
 
@@ -95,13 +101,15 @@ z=[] # validation
 
 plt.plot(x, y)
 _step=0
-while _step * batch < max_iter:
+while tranining_dataset.completed_epoch <= max_epoch:
+
     if _step%validation_iter==0:
         # do validation for validation set, and plot average 
         # metric(cc, sim, auc, kld, nss) performance dictionary
         pass
 
     frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=batch,stops=stops)
+
     solver.net.blobs['data'].data[...] = frame_minibatch
     solver.net.blobs['gt'].data[...] = density_minibatch
     solver.step(1)

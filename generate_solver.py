@@ -21,10 +21,12 @@ def write_sovler(solver_path,
         os.makedirs(snapshot_dir)
     sovler_string.snapshot_prefix = snapshot_dir+'/snapshot_'
     
-    sovler_string.base_lr = 0.001
+    sovler_string.base_lr = 0.01
     sovler_string.momentum = 0.9
     sovler_string.weight_decay = 0.0001
     sovler_string.lr_policy = 'inv'
+    sovler_string.power = 0.75
+    sovler_string.gamma = 0.0005
     sovler_string.display = 50
     sovler_string.max_iter = 1000000
     sovler_string.snapshot = 5000

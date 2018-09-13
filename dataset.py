@@ -11,9 +11,10 @@ class ImageDataset():
         self.frame_path_list = glob.glob(os.path.join(frame_basedir, '*.*'))
         self.density_path_list = glob.glob(os.path.join(density_basedir, '*.*'))
         if debug is True:
-            print "Debug mode"
-            frame_path_list = frame_path_list[:1000]
-            density_path_list = density_path_list[:1000]
+            print "Warning: this session is in debug mode"
+            length = len(self.frame_path_list)
+            self.frame_path_list = self.frame_path_list[:length/100]
+            self.density_path_list = self.density_path_list[:length/100]
 
         self.num_examples = len(self.frame_path_list)
 
@@ -40,17 +41,17 @@ class ImageDataset():
         if self.index_in_epoch > self.num_examples:
             # Finished epoch
             self.completed_epoch += 1
+            print "INFO:%s epoch(es) finished." % str(self.completed_epoch)
             # Shuffle the data
-            perm = np.arange(self.num_examples)
-            np.random.shuffle(perm)
-            self.frame_path_list = self.frame_path_list[perm]
-            self.density_path_list = self.density_path_list[perm]
+            tmp_list = list(zip(self.frame_path_list, self.density_path_list))
+            np.random.shuffle(tmp_list)
+            self.frame_path_list, self.density_path_list=zip(*tmp_list)
+            
             # Start next epoch
             start = 0
             self.index_in_epoch = batch_size
             assert batch_size <= self.num_examples
         end = self.index_in_epoch
-
         return self.frame_path_list[start:end], self.density_path_list[start:end]
 
     def next_batch(self, batch_size):
