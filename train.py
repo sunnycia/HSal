@@ -41,12 +41,6 @@ def get_arguments():
 
 print "Parsing arguments..."
 args = get_arguments()
-##
-batch=args.batch
-stops=args.stops
-width=args.width
-height=args.height
-
 
 ## Figure dir
 snapshot_path = args.snapshot
@@ -62,11 +56,10 @@ shutil.copyfile(solver_path, os.path.join(snapshot_path, os.path.basename(solver
 shutil.copyfile(network_path, os.path.join(snapshot_path, os.path.basename(network_path)))
 shutil.copyfile('train.sh', os.path.join(snapshot_path, 'train.sh'))
 
-
-
-
 # load the solver
 solver = caffe.SGDSolver(solver_path)
+solver.net.copy_from(args.pretrained_model)
+
 # if args.use_snapshot == '':
 # pretrained_model_path= '../pretrained_model/ResNet-50-model.caffemodel'
 #     solver.net.copy_from(pretrained_model_path) # untrained.caffemodel
@@ -82,7 +75,7 @@ if args.dsname == 'salicon':
     validation_frame_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/images'
     validation_density_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/density'
 
-tranining_dataset = ImageDataset(frame_basedir=train_frame_basedir, density_basedir=train_density_basedir, img_size=(width, height), debug=args.debug)
+tranining_dataset = ImageDataset(frame_basedir=train_frame_basedir, density_basedir=train_density_basedir, img_size=(args.width, args.height), debug=args.debug)
 
 if args.debug:
     max_epoch=10
@@ -108,7 +101,7 @@ while tranining_dataset.completed_epoch <= max_epoch:
         # metric(cc, sim, auc, kld, nss) performance dictionary
         pass
 
-    frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=batch,stops=stops)
+    frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops)
 
     solver.net.blobs['data'].data[...] = frame_minibatch
     solver.net.blobs['gt'].data[...] = density_minibatch

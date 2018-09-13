@@ -110,31 +110,36 @@ def Bilinear_upsample(name, bottom, num_output, kernel_size, stride, pad):
     layer.param.extend(_get_param(1))
     return layer
 
-
-def Act(name, bottom):
-    top_name = name
+def Bn_Sc(name, bottom):
+    top_name=name
+    name=name.replace('res', '')
     # BN
+
     bn_layer = caffe_pb2.LayerParameter()
-    bn_layer.name = name + '_bn'
+    bn_layer.name = 'bn' + name
     bn_layer.type = 'BatchNorm'
     bn_layer.bottom.extend([bottom])
     bn_layer.top.extend([top_name])
     # Scale
     scale_layer = caffe_pb2.LayerParameter()
-    scale_layer.name = name + '_scale'
+    scale_layer.name = 'scale'+name
     scale_layer.type = 'Scale'
     scale_layer.bottom.extend([top_name])
     scale_layer.top.extend([top_name])
     scale_layer.scale_param.filler.value = 1
     scale_layer.scale_param.bias_term = True
     scale_layer.scale_param.bias_filler.value = 0
+    return [bn_layer, scale_layer]
+
+def Act(name, bottom):
+    top_name = name
     # ReLU
     relu_layer = caffe_pb2.LayerParameter()
     relu_layer.name = name + '_relu'
     relu_layer.type = 'ReLU'
     relu_layer.bottom.extend([top_name])
     relu_layer.top.extend([top_name])
-    return [bn_layer, scale_layer, relu_layer]
+    return [relu_layer]
 
 
 def Pool(name, bottom, pooling_method, kernel_size, stride, pad):
@@ -182,33 +187,42 @@ def ResBlock(name, bottom, dim, stride, block_type=None):
     if block_type == 'no_preact':
         res_bottom = bottom
         # 1x1 conv at shortcut branch
-        layers.append(Conv(name + '_proj', res_bottom, dim*4, 1, stride, 0))
+        layers.append(Conv(name + '_branch1', res_bottom, dim*4, 1, stride, 0))
+        layers.extend(Bn_Sc(name + '_branch1', layers[-1].top[0]))
+
         shortcut_top = layers[-1].top[0]
     elif block_type == 'both_preact':
-        layers.extend(Act(name + '_pre', bottom))
-        res_bottom = layers[-1].top[0]
+        # layers.extend(Act(name + '_pre', bottom))
+        # res_bottom = layers[-1].top[0]
+        res_bottom=bottom
         # 1x1 conv at shortcut branch
-        layers.append(Conv(name + '_proj', res_bottom, dim*4, 1, stride, 0))
+        layers.append(Conv(name + '_branch1', res_bottom, dim*4, 1, stride, 0))
+        layers.extend(Bn_Sc(name + '_branch1', layers[-1].top[0]))
         shortcut_top = layers[-1].top[0]
     else:
         shortcut_top = bottom
         # preact at residual branch
-        layers.extend(Act(name + '_pre', bottom))
-        res_bottom = layers[-1].top[0]
+        # layers.extend(Act(name + '_pre', bottom))
+        # res_bottom = layers[-1].top[0]
+        res_bottom=bottom
     # residual branch: conv1 -> conv1_act -> conv2 -> conv2_act -> conv3
-    layers.append(Conv(name + '_conv1', res_bottom, dim, 1, 1, 0))
-    layers.extend(Act(name + '_conv1', layers[-1].top[0]))
-    layers.append(Conv(name + '_conv2', layers[-1].top[0], dim, 3, stride, 1))
-    layers.extend(Act(name + '_conv2', layers[-1].top[0]))
-    layers.append(Conv(name + '_conv3', layers[-1].top[0], dim*4, 1, 1, 0))
+    layers.append(Conv(name + '_branch2a', res_bottom, dim, 1, 1, 0))
+    layers.extend(Bn_Sc(name + '_branch2a', layers[-1].top[0]))
+    layers.extend(Act(name + '_branch2a', layers[-1].top[0]))
+    layers.append(Conv(name + '_branch2b', layers[-1].top[0], dim, 3, stride, 1))
+    layers.extend(Bn_Sc(name + '_branch2b', layers[-1].top[0]))
+    layers.extend(Act(name + '_branch2b', layers[-1].top[0]))
+    layers.append(Conv(name + '_branch2c', layers[-1].top[0], dim*4, 1, 1, 0))
+    layers.extend(Bn_Sc(name + '_branch2c', layers[-1].top[0]))
     # elementwise addition
     layers.append(Add(name, [shortcut_top, layers[-1].top[0]]))
+    layers.extend(Act(name, layers[-1].top[0]))
     return layers
 
 
 def ResLayer(name, bottom, num_blocks, dim, stride, layer_type=None):
     assert num_blocks >= 1
-    _get_name = lambda i: '{}_res{}'.format(name, i)
+    _get_name = lambda i: '{}{}'.format(name,chr(i+96))
     layers = []
     first_block_type = 'no_preact' if layer_type == 'first' else 'both_preact'
     layers.extend(ResBlock(_get_name(1), bottom, dim, stride, first_block_type))
@@ -263,14 +277,15 @@ def create_model(depth, batch, stops,height=600,width=800, loss='L1LossLayer'):
     layers.append(Data_python('data', ['data'], param_str=data_param_str))
     layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
 
-    layers.append(Conv('conv1', 'data', 64, 7, 2, 3))
-    layers.extend(Act('conv1', layers[-1].top[0]))
+    layers.append(Conv('conv1_hdr', 'data', 64, 7, 2, 3))
+    layers.extend(Bn_Sc('conv1_hdr', layers[-1].top[0]))
+    layers.extend(Act('conv1_hdr', layers[-1].top[0]))
     layers.append(Pool('pool1', layers[-1].top[0], 'max', 3, 2, 0))
-    layers.extend(ResLayer('conv2', layers[-1].top[0], num[0], 64, 1, 'first'))
-    layers.extend(ResLayer('conv3', layers[-1].top[0], num[1], 128, 2))
-    layers.extend(ResLayer('conv4', layers[-1].top[0], num[2], 256, 2))
-    layers.extend(ResLayer('conv5', layers[-1].top[0], num[3], 512, 2))
-    layers.extend(Act('conv5', layers[-1].top[0]))
+    layers.extend(ResLayer('res2', layers[-1].top[0], num[0], 64, 1, 'first'))
+    layers.extend(ResLayer('res3', layers[-1].top[0], num[1], 128, 2))
+    layers.extend(ResLayer('res4', layers[-1].top[0], num[2], 256, 2))
+    layers.extend(ResLayer('res5', layers[-1].top[0], num[3], 512, 2))
+    layers.extend(Bn_Sc('conv5', layers[-1].top[0]))
 
     layers.append(Bilinear_upsample('deconv1', 'conv5', 256, 4, 2, 1))
     layers.append(Bilinear_upsample('deconv2', 'deconv1', 128, 4, 2, 1))
