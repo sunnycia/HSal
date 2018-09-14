@@ -25,7 +25,7 @@ HEIGHT=384
 WIDTH=512
 STOPS=3
 BATCH=8
-LOSS=BDLossLayer
+LOSS=BDistLayer
 DS_NAME=salicon
 
 # Training setting variable

@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 def write_solver(solver_path,
                  net_path, 
-                 snapshot_dir
+                 snapshot_dir,
                  config_dict={}):
 
     my_project_root = "./"
@@ -25,11 +25,11 @@ def write_solver(solver_path,
 
     sovler_string.lr_policy = 'inv'
     ###'inv' setting
-    sovler_string.power = 0.75
-    sovler_string.gamma = 0.0005
+    # sovler_string.power = 0.75
+    # sovler_string.gamma = 0.0005
     ###'step' setting
-    # sovler_string.power = 0.0
-    # sovler_string.gamma = 0.0
+    sovler_string.power = 0.0
+    sovler_string.gamma = 0.0
 
 
     sovler_string.display = 50

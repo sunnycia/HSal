@@ -22,7 +22,7 @@ class ImageDataset():
             self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
             self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/hdr_saliency_map'
 
-        elif ds_name='hdreye_sdr':
+        elif ds_name=='hdreye_sdr':
             self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/LDR-JPG'
             self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/LDR-JPG'
             self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
