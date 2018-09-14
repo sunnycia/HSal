@@ -4,12 +4,35 @@ import numpy as np
 import hdr_utils
 
 class ImageDataset():
-    def __init__(self, frame_basedir, density_basedir, debug=False, img_size=(800, 600)):
+    def __init__(self, ds_name, debug=False, img_size=(800, 600)):
+        if ds_name == 'salicon':
+            self.frame_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/train2014/images'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/train2014/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/train2014/density'
+            self.saliency_basedir = ''
+        elif ds_name == 'salicon_eval':
+            self.frame_basedir= '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/images'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/density'
+            self.saliency_basedir = ''
+
+        elif ds_name=='hdreye_hdr':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/HDR'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
+            self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/hdr_saliency_map'
+
+        elif ds_name='hdreye_sdr':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/LDR-JPG'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/LDR-JPG'
+            self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/sdr_saliency_map'
+
         MEAN_VALUE = np.array([103.939, 116.779, 123.68], dtype=np.float32)   # B G R/ use opensalicon's mean_value
         self.MEAN_VALUE = MEAN_VALUE[None, None, ...]
         self.img_size = img_size
-        self.frame_path_list = glob.glob(os.path.join(frame_basedir, '*.*'))
-        self.density_path_list = glob.glob(os.path.join(density_basedir, '*.*'))
+        self.frame_path_list = glob.glob(os.path.join(self.frame_basedir, '*.*'))
+        self.density_path_list = glob.glob(os.path.join(self.density_basedir, '*.*'))
         if debug is True:
             print "Warning: this session is in debug mode"
             length = len(self.frame_path_list)
@@ -56,11 +79,11 @@ class ImageDataset():
 
     def next_batch(self, batch_size):
         """Return the next `batch_size` examples from this data set."""
-        batch_frame_path_list, batch_density_path_list = self.get_batch_path(batch_size)
+        self.batch_frame_path_list, self.batch_density_path_list = self.get_batch_path(batch_size)
 
         batch_frame_list =[]
         batch_density_list =[]
-        for (frame_path, density_path) in zip(batch_frame_path_list, batch_density_path_list):
+        for (frame_path, density_path) in zip(self.batch_frame_path_list, self.batch_density_path_list):
             # assert frame_path
             frame = cv2.imread(frame_path).astype(np.float32)
             density = cv2.imread(density_path, 0).astype(np.float32)
@@ -71,22 +94,20 @@ class ImageDataset():
             batch_density_list.append(density)
             # if len(batch_frame_list) %  == 0:
             #     print len(self.data), '\r',
-
         return np.array(batch_frame_list), np.array(batch_density_list)
 
 
     # return np.array(image_list)
     
     def next_hdr_batch(self, batch_size, stops):
-        batch_frame_path_list, batch_density_path_list = self.get_batch_path(batch_size)
+        self.batch_frame_path_list, self.batch_density_path_list = self.get_batch_path(batch_size)
 
         batch_frame_list = []
         batch_density_list = []
-        for (frame_path, density_path) in zip(batch_frame_path_list, batch_density_path_list):
+        for (frame_path, density_path) in zip(self.batch_frame_path_list, self.batch_density_path_list):
             if frame_path.endswith('hdr'):
                 frame = imageio.imread(frame_path).astype(np.float32)
                 frame = frame[:, :, ::-1]# convert to bgr
-
             else:
                 frame = cv2.imread(frame_path).astype(np.float32)
 

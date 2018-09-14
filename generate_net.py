@@ -260,7 +260,7 @@ def Accuracy(name, bottoms, top_k):
     return layer
 
 
-def create_model(depth, batch, stops,height=600,width=800, loss='L1LossLayer'):
+def v1_basic(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
     model.name = 'ResNet_{}'.format(depth)
     configs = {
@@ -274,8 +274,14 @@ def create_model(depth, batch, stops,height=600,width=800, loss='L1LossLayer'):
     data_channel=stops*3
     data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
     gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
     layers.append(Data_python('data', ['data'], param_str=data_param_str))
-    layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    if phase=='train':
+        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
 
     layers.append(Conv('conv1_hdr', 'data', 64, 7, 2, 3))
     layers.extend(Bn_Sc('conv1_hdr', layers[-1].top[0]))
@@ -293,14 +299,20 @@ def create_model(depth, batch, stops,height=600,width=800, loss='L1LossLayer'):
     layers.append(Bilinear_upsample('deconv4', 'deconv3', 3, 4, 2, 1))
     layers.append(Bilinear_upsample('predict', 'deconv4', 1, 4, 2, 1))
 
-    layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
+    if phase=='train':
+        layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
 
     model.layer.extend(layers)
     return model
 
 
 def main(args):
-    model = create_model(depth=args.depth, 
+    model_name= args.model
+    model = eval(model_name)(depth=args.depth, 
                          batch=args.batch,
                          stops=args.stops,
                          height=args.height,
@@ -310,6 +322,19 @@ def main(args):
         args.output = osp.join(osp.dirname(__file__),
             'resnet{}_trainval.prototxt'.format(args.depth))
     with open(args.output, 'w') as f:
+        f.write(pb.text_format.MessageToString(model))
+
+    model = eval(model_name)(depth=args.depth, 
+                         batch=args.batch,
+                         stops=args.stops,
+                         height=args.height,
+                         width=args.width,
+                         loss=args.loss,
+                         phase='deploy')
+    if args.output is None:
+        args.output = osp.join(osp.dirname(__file__),
+            'resnet{}_deploy.prototxt'.format(args.depth))
+    with open(os.path.join(os.path.dirname(args.output), 'deploy.prototxt'), 'w') as f:
         f.write(pb.text_format.MessageToString(model))
 
 
@@ -323,5 +348,6 @@ if __name__ == '__main__':
     parser.add_argument('--batch', type=int, default=8)
     parser.add_argument('--stops', type=int, default=3)
     parser.add_argument('--loss', type=str, default='L1LossLayer')
+    parser.add_argument('--model', type=str, default='v1_basic')
     args = parser.parse_args()
     main(args)

@@ -6,7 +6,8 @@ from argparse import ArgumentParser
 
 def write_solver(solver_path,
                  net_path, 
-                 snapshot_dir):
+                 snapshot_dir
+                 config_dict={}):
 
     my_project_root = "./"
     sovler_string = caffe.proto.caffe_pb2.SolverParameter() 
@@ -20,9 +21,17 @@ def write_solver(solver_path,
     sovler_string.base_lr = 0.01
     sovler_string.momentum = 0.9
     sovler_string.weight_decay = 0.0001
+
+
     sovler_string.lr_policy = 'inv'
+    ###'inv' setting
     sovler_string.power = 0.75
     sovler_string.gamma = 0.0005
+    ###'step' setting
+    # sovler_string.power = 0.0
+    # sovler_string.gamma = 0.0
+
+
     sovler_string.display = 50
     sovler_string.max_iter = 1000000
     sovler_string.snapshot = 5000
