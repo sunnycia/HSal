@@ -34,7 +34,7 @@ def write_solver(solver_path,
 
     sovler_string.display = 50
     sovler_string.max_iter = 1000000
-    sovler_string.snapshot = 5000
+    sovler_string.snapshot = 10000
     sovler_string.solver_mode = caffe.proto.caffe_pb2.SolverParameter.GPU  
 
     with open(solver_file, 'w') as f:

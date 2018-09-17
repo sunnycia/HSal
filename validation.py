@@ -6,11 +6,11 @@ from saliency_metric.benchmark.metrics import *
 
 
 
-def validation(solver_instance, dataset_instance, snapshot_dir, stops):
+def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
     loss_list = []
     cc_list = []
     sim_list = []
-    validation_directory = os.path.join(snapshot_dir, 'validation_output')
+    validation_directory = os.path.join(snapshot_dir, 'validation_output_'+str(step))
     if not os.path.isdir(validation_directory):
     	os.mkdir(validation_directory)
     # print dir(solver_instance), solver_instance.snapshot();exit()

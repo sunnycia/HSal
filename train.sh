@@ -5,7 +5,7 @@ PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=snapshot/v1_basic/2018091413:42:43/snapshot__iter_35000.caffemodel #BHA step 0.01 100epoch
 
 # DEBUG=1 # comment this line if not in debug mode
-GPU=6
+GPU=4
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
 MODEL=v1_basic
 MODEL_DIR=$MODEL
@@ -30,12 +30,13 @@ HEIGHT=384
 WIDTH=512
 STOPS=3
 BATCH=8
-LOSS=BDistLayer
+LOSS=L1LossLayer
 TRAIN_DS=salicon
 VAL_DS=salicon_val
 
 # Training setting variable
-VAL_ITER=5000
+VAL_ITER=12500
+# VAL_EPOCH=20
 PLT_ITER=500
 EPOCH=100
 
@@ -58,8 +59,4 @@ else
     CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --snapshot_dir=$SNAPSHOT_DIR "
     if [ -n "$DEBUG" ];then CMD="$CMD"--debug; fi # restore snapshot state
     eval $CMD
-fi    
-
-
-
-# evaluation metric
+fi

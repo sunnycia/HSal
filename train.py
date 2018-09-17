@@ -29,6 +29,7 @@ def get_arguments():
     parser.add_argument('--height', type=int, help='training image height')
 
     parser.add_argument('--max_epoch', type=int, help='maximum epoch iteration')
+    # parser.add_argument('--val_epoch', type=int, help='validation epoch')
     parser.add_argument('--val_iter', type=int, help='validation iter')
     parser.add_argument('--plt_iter', type=int, help='plot iter')
 
@@ -49,10 +50,12 @@ validation_dataset = ImageDataset(ds_name=args.validation_ds,img_size=(args.widt
 
 if args.debug:
     max_epoch=10
+    # validation_epoch=2
     validation_iter=50
     plot_iter=25
 else:
     max_epoch = args.max_epoch
+    # validation_epoch = args.val_epoch
     validation_iter = args.val_iter
     plot_iter = args.plt_iter
 
@@ -95,12 +98,15 @@ else:
 
 
 plt.plot(x, y)
-while tranining_dataset.completed_epoch <= max_epoch:
-
-    if _step%validation_iter==0:
+while tranining_dataset.completed_epoch < max_epoch:
+    # epoch = tranining_dataset.completed_epoch
+    # if not tranining_dataset.completed_epoch in complete_val_epoch_list:
+    if _step % validation_iter==0:
+        print "INFO: step %s, doing validation" % str(_step)
         # do validation for validation set, and plot average 
         # metric(cc, sim, auc, kld, nss) performance dictionary
-        validation(solver_instance=solver, 
+        validation(step=_step,
+                   solver_instance=solver, 
                    dataset_instance=validation_dataset,
                    snapshot_dir = args.snapshot,
                    stops=args.stops)
