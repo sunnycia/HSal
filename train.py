@@ -6,6 +6,7 @@ import argparse, cv2, os, glob, sys, time, shutil
 import cPickle as pkl
 import numpy as np
 import caffe
+from validation import validation
 
 caffe.set_mode_gpu()
 
@@ -16,7 +17,8 @@ def get_arguments():
     parser.add_argument('--pretrained_model', type=str, help='pretrained model.')
     parser.add_argument('--snapshot_dir', type=str, default='', help='directory of snapshot, this will restore the latest snapshot')
     # parser.add_argument('--use_snapshot', type=str, default='', help='Snapshot path.')
-    parser.add_argument('--dsname', type=str, default='salicon', help='training dataset')
+    parser.add_argument('--training_ds', type=str, default='salicon', help='training dataset')
+    parser.add_argument('--validation_ds', type=str, default='salicon', help='training dataset')
     parser.add_argument('--debug', action='store_true', default=False, help='If debug is ture, a mini set will run into training.Or a complete set will.')
     # parser.add_argument('--visualization', type=bool, default=False, help='visualization training loss option')
 
@@ -41,7 +43,8 @@ args = get_arguments()
 
 ##
 print "Loading data..."
-tranining_dataset = ImageDataset(ds_name=args.dsname,img_size=(args.width, args.height), debug=args.debug)
+tranining_dataset = ImageDataset(ds_name=args.training_ds,img_size=(args.width, args.height), debug=args.debug)
+validation_dataset = ImageDataset(ds_name=args.validation_ds,img_size=(args.width, args.height), debug=args.debug)
 
 
 if args.debug:
@@ -97,7 +100,8 @@ while tranining_dataset.completed_epoch <= max_epoch:
     if _step%validation_iter==0:
         # do validation for validation set, and plot average 
         # metric(cc, sim, auc, kld, nss) performance dictionary
-        pass
+        validation(solver_instance=solver, 
+                   dataset_instance=validation_dataset)
 
     frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops)
 

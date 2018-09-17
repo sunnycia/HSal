@@ -318,9 +318,7 @@ def main(args):
                          height=args.height,
                          width=args.width,
                          loss=args.loss)
-    if args.output is None:
-        args.output = osp.join(osp.dirname(__file__),
-            'resnet{}_trainval.prototxt'.format(args.depth))
+
     with open(args.output, 'w') as f:
         f.write(pb.text_format.MessageToString(model))
 
@@ -331,10 +329,8 @@ def main(args):
                          width=args.width,
                          loss=args.loss,
                          phase='deploy')
-    if args.output is None:
-        args.output = osp.join(osp.dirname(__file__),
-            'resnet{}_deploy.prototxt'.format(args.depth))
-    with open(os.path.join(os.path.dirname(args.output), 'deploy.prototxt'), 'w') as f:
+
+    with open(os.path.join(os.path.dirname(args.output), model_name+'_deploy.prototxt'), 'w') as f:
         f.write(pb.text_format.MessageToString(model))
 
 
@@ -342,7 +338,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--depth', type=int, default=200,
                         choices=[50, 101, 152, 200])
-    parser.add_argument('-o', '--output', type=str, help='path of output network prototxt')
+    parser.add_argument('-o', '--output', type=str, required=True, help='path of output network prototxt')
     parser.add_argument('--height', type=int)
     parser.add_argument('--width', type=int)
     parser.add_argument('--batch', type=int, default=8)

@@ -28,8 +28,8 @@ BATCH=8
 LOSS=BDistLayer
 DS_NAME=salicon
 
-# Training setting variable
 
+# Training setting variable
 VAL_ITER=5000
 PLT_ITER=500
 EPOCH=100
