@@ -70,10 +70,16 @@ while ds.completed_epoch==0:
     frame_minibatch, _ = ds.next_hdr_batch(1, stops=args.stops)
     network.blobs['data'].data[...] = frame_minibatch
     network.forward()
-    prediction = network.blobs['predict'].data[...]
-    sm = prediction[0,0,:,:]
-    sal_map = postprocess_saliency_map(sm)
+    prediction = network.blobs['predict'].data[0, 0, :, :]
 
+    # print len(prediction[0]);exit()
+    # sm = prediction[0,0,:,:]
+    # sal_map = postprocess_saliency_map(sm)
+    sal_map = prediction
+    sal_map = sal_map-np.min(sal_map)
+    sal_map = sal_map/np.max(sal_map)
+    sal_map = sal_map * 255
+    print sal_map[0,0]
     img_name = os.path.basename(ds.batch_frame_path_list[0]).split('.')[0]
     sm_name = img_name+'.jpg'
     sm_path = os.path.join(output_dir, sm_name)

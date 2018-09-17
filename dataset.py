@@ -125,7 +125,7 @@ class ImageDataset():
                 image_list[i]=self.pre_process_img(img, greyscale=False)
 
             # print frame.shape, len(image_list)
-            image_array =np.concatenate(np.array(image_list))
+            image_array = np.concatenate(np.array(image_list))
             assert image_array.shape[0]==stops*3
 
             batch_frame_list.append(image_array)

@@ -8,7 +8,7 @@ else
     MOD_DIR=$1
 fi
 
-DSNAME=hdreye_hdr
+DSNAME=salicon_val
 HEIGHT=384
 WIDTH=512
 STOPS=3

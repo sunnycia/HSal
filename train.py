@@ -101,9 +101,11 @@ while tranining_dataset.completed_epoch <= max_epoch:
         # do validation for validation set, and plot average 
         # metric(cc, sim, auc, kld, nss) performance dictionary
         validation(solver_instance=solver, 
-                   dataset_instance=validation_dataset)
+                   dataset_instance=validation_dataset,
+                   snapshot_dir = args.snapshot,
+                   stops=args.stops)
+        validation_dataset.completed_epoch=0
         # pass
-
     frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops)
 
     solver.net.blobs['data'].data[...] = frame_minibatch

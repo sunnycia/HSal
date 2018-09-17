@@ -105,7 +105,7 @@ def Bilinear_upsample(name, bottom, num_output, kernel_size, stride, pad):
     layer.convolution_param.kernel_size.extend([kernel_size])
     layer.convolution_param.stride.extend([stride])
     layer.convolution_param.pad.extend([pad])
-    layer.convolution_param.weight_filler.type = 'msra'
+    layer.convolution_param.weight_filler.type = 'bilinear'
     layer.convolution_param.bias_term = False
     layer.param.extend(_get_param(1))
     return layer
