@@ -1,8 +1,8 @@
 #!/usr/bin/sh
 
 TS=`date "+%Y%m%d%T"`
-# PRE_MODEL=misc/ResNet-50-model.caffemodel
-PRE_MODEL=snapshot/v1_basic/2018091500:20:02/snapshot__iter_125000.caffemodel
+PRE_MODEL=misc/ResNet-50-model.caffemodel
+# PRE_MODEL=snapshot/v1_basic/2018091500:20:02/snapshot__iter_125000.caffemodel #BHA step 0.01 100epoch
 
 GPU=7
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
@@ -27,8 +27,8 @@ WIDTH=512
 STOPS=3
 BATCH=8
 LOSS=BDistLayer
-DS_NAME=salicon
-
+TRAIN_DS=salicon
+VAL_DS=salicon_val
 
 # Training setting variable
 VAL_ITER=5000
@@ -45,9 +45,9 @@ if [ -z "$SNAPSHOT_DIR"];
     python generate_solver.py --network_path=$NET --solver_path=$SOLVER --snapshot_dir=$SNAPSHOT
     rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
     
-    python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --dsname=$DS_NAME --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL
+    python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL
 else
-    python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --dsname=$DS_NAME --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --snapshot_dir=$SNAPSHOT_DIR # restore snapshot state
+    python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --snapshot_dir=$SNAPSHOT_DIR # restore snapshot state
 fi    
 
 

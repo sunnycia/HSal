@@ -102,6 +102,7 @@ while tranining_dataset.completed_epoch <= max_epoch:
         # metric(cc, sim, auc, kld, nss) performance dictionary
         validation(solver_instance=solver, 
                    dataset_instance=validation_dataset)
+        # pass
 
     frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops)
 
