@@ -1,9 +1,10 @@
 #!/usr/bin/sh
 
 TS=`date "+%Y%m%d%T"`
-PRE_MODEL=misc/ResNet-50-model.caffemodel
+# PRE_MODEL=misc/ResNet-50-model.caffemodel
+PRE_MODEL=snapshot/v1_basic/2018091500:20:02/snapshot__iter_125000.caffemodel
 
-GPU=6
+GPU=7
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
 MODEL=v1_basic
 if [ -n "$SNAPSHOT_DIR" ];
