@@ -1,31 +1,12 @@
 #!/usr/bin/sh
 
-GPU=4
+GPU=7
 # DEBUG=1 # comment this line if not in debug mode
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=snapshot/v1_basic/2018091413:42:43/snapshot__iter_35000.caffemodel #BHA step 0.01 100epoch
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
-MODEL=v1_onedeconv
+MODEL=v1_threedeconv
 
-
-TS=`date "+%Y%m%d%T"`
-
-MODEL_DIR=$MODEL
-if [ -n "$DEBUG" ]; then MODEL_DIR="$MODEL"_debug; fi
-
-if [ -n "$SNAPSHOT_DIR" ];
-then
-    SNAPSHOT=$(ls $SNAPSHOT_DIR/*solverstate -t1 |  head -n 1) #the latest solverstate
-    SOLVER=$(ls $SNAPSHOT_DIR/*.prototxt -s1 |head -n 1) #the smaller prototxt
-    NET=$(ls $SNAPSHOT_DIR/*.prototxt -S1 | head -n 1) #the bigger prototxt
-else
-    SNAPSHOT=snapshot/$MODEL_DIR/$TS
-    SOLVER=prototxt/solver.prototxt
-    NET=prototxt/$MODEL.prototxt
-fi
-
-# HEIGHT=600
-# WIDTH=800
 HEIGHT=384
 WIDTH=512
 STOPS=3
@@ -40,6 +21,24 @@ VAL_ITER=25000
 # VAL_EPOCH=20
 PLT_ITER=500
 EPOCH=100
+
+
+
+TS=`date "+%Y%m%d%T"`
+MODEL_DIR=$MODEL
+if [ -n "$DEBUG" ]; then MODEL_DIR="$MODEL"_debug; fi
+
+if [ -n "$SNAPSHOT_DIR" ];
+then
+    SNAPSHOT=$(ls $SNAPSHOT_DIR/*solverstate -t1 |  head -n 1) #the latest solverstate
+    SOLVER=$(ls $SNAPSHOT_DIR/*.prototxt -s1 |head -n 1) #the smaller prototxt
+    NET=$(ls $SNAPSHOT_DIR/*.prototxt -S1 | head -n 1) #the bigger prototxt
+else
+    SNAPSHOT=snapshot/$MODEL_DIR/$TS
+    SOLVER=prototxt/solver.prototxt
+    NET=prototxt/$MODEL.prototxt
+fi
+
 
 export CUDA_VISIBLE_DEVICES=$GPU
 if [ -z "$SNAPSHOT_DIR"];
