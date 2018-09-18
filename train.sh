@@ -1,13 +1,15 @@
 #!/usr/bin/sh
 
-TS=`date "+%Y%m%d%T"`
+GPU=7
+# DEBUG=1 # comment this line if not in debug mode
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=snapshot/v1_basic/2018091413:42:43/snapshot__iter_35000.caffemodel #BHA step 0.01 100epoch
-
-# DEBUG=1 # comment this line if not in debug mode
-GPU=4
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
-MODEL=v1_basic
+MODEL=v1_onedeconv
+
+
+TS=`date "+%Y%m%d%T"`
+
 MODEL_DIR=$MODEL
 if [ -n "$DEBUG" ]; then MODEL_DIR="$MODEL"_debug; fi
 
@@ -22,24 +24,22 @@ else
     NET=prototxt/$MODEL.prototxt
 fi
 
-
-# this setting cause out
 # HEIGHT=600
 # WIDTH=800
 HEIGHT=384
 WIDTH=512
 STOPS=3
-BATCH=8
-LOSS=L1LossLayer
+BATCH=4
+LOSS=BDistLayer
 TRAIN_DS=salicon
 VAL_DS=salicon_val
 
 # Training setting variable
-VAL_ITER=12500
+# VAL_ITER=12500
+VAL_ITER=25000
 # VAL_EPOCH=20
 PLT_ITER=500
 EPOCH=100
-
 
 export CUDA_VISIBLE_DEVICES=$GPU
 if [ -z "$SNAPSHOT_DIR"];

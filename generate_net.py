@@ -4,7 +4,7 @@ import sys
 import google.protobuf as pb
 import google.protobuf.text_format
 from argparse import ArgumentParser
-
+import math
 CAFFE_ROOT = osp.join(osp.dirname(__file__), '..', 'caffe')
 if osp.join(CAFFE_ROOT, 'python') not in sys.path:
     sys.path.insert(0, osp.join(CAFFE_ROOT, 'python'))
@@ -94,12 +94,33 @@ def Conv(name, bottom, num_output, kernel_size, stride, pad):
     layer.param.extend(_get_param(1))
     return layer
 
-def Bilinear_upsample(name, bottom, num_output, kernel_size, stride, pad):
+# def Bilinear_upsample(name, bottom, num_output, kernel_size, stride, pad):
+#     layer = caffe_pb2.LayerParameter()
+#     layer.name = name
+#     layer.type = 'Deconvolution'
+#     layer.bottom.extend([bottom])
+#     layer.top.extend([name])
+#     layer.convolution_param.num_output = num_output
+#     # layer.convolution_param.group = num_output
+#     layer.convolution_param.kernel_size.extend([kernel_size])
+#     layer.convolution_param.stride.extend([stride])
+#     layer.convolution_param.pad.extend([pad])
+#     layer.convolution_param.weight_filler.type = 'bilinear'
+#     layer.convolution_param.bias_term = False
+#     layer.param.extend(_get_param(1))
+#     return layer
+
+def Bilinear_upsample(name, bottom, num_output, factor):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
     layer.type = 'Deconvolution'
     layer.bottom.extend([bottom])
     layer.top.extend([name])
+
+    kernel_size = int(2*factor-factor%2)
+    stride=factor
+    pad=int(math.ceil((factor-1)/2.))
+
     layer.convolution_param.num_output = num_output
     # layer.convolution_param.group = num_output
     layer.convolution_param.kernel_size.extend([kernel_size])
@@ -260,15 +281,15 @@ def Accuracy(name, bottoms, top_k):
     return layer
 
 
+configs = {
+    50: [3, 4, 6, 3],
+    101: [3, 4, 23, 3],
+    152: [3, 8, 36, 3],
+    200: [3, 24, 36, 3],
+}
 def v1_basic(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
     model.name = 'ResNet_{}'.format(depth)
-    configs = {
-        50: [3, 4, 6, 3],
-        101: [3, 4, 23, 3],
-        152: [3, 8, 36, 3],
-        200: [3, 24, 36, 3],
-    }
     num = configs[depth]
     layers = []
     data_channel=stops*3
@@ -293,11 +314,93 @@ def v1_basic(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase=
     layers.extend(ResLayer('res5', layers[-1].top[0], num[3], 512, 2))
     layers.extend(Bn_Sc('conv5', layers[-1].top[0]))
 
-    layers.append(Bilinear_upsample('deconv1', 'conv5', 256, 4, 2, 1))
-    layers.append(Bilinear_upsample('deconv2', 'deconv1', 128, 4, 2, 1))
-    layers.append(Bilinear_upsample('deconv3', 'deconv2', 64, 4, 2, 1))
-    layers.append(Bilinear_upsample('deconv4', 'deconv3', 3, 4, 2, 1))
-    layers.append(Bilinear_upsample('predict', 'deconv4', 1, 4, 2, 1))
+    layers.append(Bilinear_upsample('deconv1', 'conv5', 256, 2))
+    layers.append(Bilinear_upsample('deconv2', 'deconv1', 128, 2))
+    layers.append(Bilinear_upsample('deconv3', 'deconv2', 64, 2))
+    layers.append(Bilinear_upsample('deconv4', 'deconv3', 3, 2))
+    layers.append(Bilinear_upsample('predict', 'deconv4', 1, 2))
+
+    if phase=='train':
+        layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    model.layer.extend(layers)
+    return model
+
+
+def v1_onedeconv(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
+    model = caffe_pb2.NetParameter()
+    model.name = 'ResNet_{}'.format(depth)
+    num = configs[depth]
+    layers = []
+    data_channel=stops*3
+    data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
+    gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
+    layers.append(Data_python('data', ['data'], param_str=data_param_str))
+    if phase=='train':
+        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    layers.append(Conv('conv1_hdr', 'data', 64, 7, 2, 3))
+    layers.extend(Bn_Sc('conv1_hdr', layers[-1].top[0]))
+    layers.extend(Act('conv1_hdr', layers[-1].top[0]))
+    layers.append(Pool('pool1', layers[-1].top[0], 'max', 3, 2, 0))
+    layers.extend(ResLayer('res2', layers[-1].top[0], num[0], 64, 1, 'first'))
+    layers.extend(ResLayer('res3', layers[-1].top[0], num[1], 128, 2))
+    layers.extend(ResLayer('res4', layers[-1].top[0], num[2], 256, 2))
+    layers.extend(ResLayer('res5', layers[-1].top[0], num[3], 512, 2))
+    layers.extend(Bn_Sc('conv5', layers[-1].top[0]))
+
+    layers.append(Bilinear_upsample('predict', 'conv5', 1, 32))
+
+    if phase=='train':
+        layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    model.layer.extend(layers)
+    return model
+
+
+def v1_threedeconv(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
+    model = caffe_pb2.NetParameter()
+    model.name = 'ResNet_{}'.format(depth)
+    num = configs[depth]
+    layers = []
+    data_channel=stops*3
+    data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
+    gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
+    layers.append(Data_python('data', ['data'], param_str=data_param_str))
+    if phase=='train':
+        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    layers.append(Conv('conv1_hdr', 'data', 64, 7, 2, 3))
+    layers.extend(Bn_Sc('conv1_hdr', layers[-1].top[0]))
+    layers.extend(Act('conv1_hdr', layers[-1].top[0]))
+    layers.append(Pool('pool1', layers[-1].top[0], 'max', 3, 2, 0))
+    layers.extend(ResLayer('res2', layers[-1].top[0], num[0], 64, 1, 'first'))
+    layers.extend(ResLayer('res3', layers[-1].top[0], num[1], 128, 2))
+    layers.extend(ResLayer('res4', layers[-1].top[0], num[2], 256, 2))
+    layers.extend(ResLayer('res5', layers[-1].top[0], num[3], 512, 2))
+    layers.extend(Bn_Sc('conv5', layers[-1].top[0]))
+
+    layers.append(Bilinear_upsample('deconv1', 'conv5', 1, 4))
+    layers.append(Bilinear_upsample('deconv2', 'deconv1', 1, 4))
+    layers.append(Bilinear_upsample('predict', 'deconv2', 1, 2))
 
     if phase=='train':
         layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))

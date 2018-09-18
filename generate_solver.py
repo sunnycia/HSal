@@ -18,7 +18,7 @@ def write_solver(solver_path,
         os.makedirs(snapshot_dir)
     sovler_string.snapshot_prefix = snapshot_dir+'/snapshot_'
     
-    sovler_string.base_lr = 0.001
+    sovler_string.base_lr = 0.01
     sovler_string.momentum = 0.9
     sovler_string.weight_decay = 0.0001
 
