@@ -1,6 +1,6 @@
 #!/usr/bin/sh
 
-GPU=7
+GPU=4
 # DEBUG=1 # comment this line if not in debug mode
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=snapshot/v1_basic/2018091413:42:43/snapshot__iter_35000.caffemodel #BHA step 0.01 100epoch
@@ -30,7 +30,7 @@ HEIGHT=384
 WIDTH=512
 STOPS=3
 BATCH=4
-LOSS=BDistLayer
+LOSS=GBDLossLayer
 TRAIN_DS=salicon
 VAL_DS=salicon_val
 

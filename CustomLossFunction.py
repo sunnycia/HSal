@@ -238,8 +238,8 @@ class GBDLossLayer(caffe.Layer):
         for i in range(bottom[0].data.shape[0]):
             # pdb.set_trace()
             gt = np.transpose(bottom[1].data[i,:,:,:],(1,2,0)).squeeze()
-            gt = scimisc.imresize(gt,bottom[0].data.shape[2:4],interp='bilinear')
-            gt = gt / 255.
+            # gt = scimisc.imresize(gt,bottom[0].data.shape[2:4],interp='bilinear')
+            # gt = gt / 255.
             # softmax normalization to obtain probability distribution
             gt_exp = np.exp(gt-np.max(gt))
             gt_snorm = gt_exp/np.sum(gt_exp)
@@ -265,11 +265,12 @@ class GBDLossLayer(caffe.Layer):
         pmap = preds
 
         # get alpha parameter:
-        alpha = np.asscalar(np.load('alpha.npy'))
+        # alpha = np.asscalar(np.load('alpha.npy'))
+        alpha = np.asscalar(np.array([0.5]))
+
 
         # compute log and difference of log values
         epsilon        = np.finfo(np.float).eps # epsilon (float or float 32)
-        # prod_alpha     = (pmap * gt) ** alpha
         prod_alpha     = pmap ** alpha *  gt ** (1 - alpha)
         prod_alpha_sum = np.sum(np.sum(prod_alpha, axis=3), axis=2)
         loss           = -np.log(np.maximum(prod_alpha_sum,epsilon))
@@ -290,7 +291,7 @@ class GBDLossLayer(caffe.Layer):
         # plt.show()
 
     def backward(self, top, propagate_down, bottom):    
-    loss_wgt = top[0].diff
+        loss_wgt = top[0].diff
         for i in range(2):
             if not propagate_down[i]:
                 continue

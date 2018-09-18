@@ -8,5 +8,5 @@ power: 0.0
 momentum: 0.899999976158
 weight_decay: 9.99999974738e-05
 snapshot: 10000
-snapshot_prefix: "snapshot/v1_onedeconv/2018091809:21:54/snapshot_"
+snapshot_prefix: "snapshot/v1_onedeconv/2018091810:23:02/snapshot_"
 solver_mode: GPU
