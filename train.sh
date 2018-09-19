@@ -1,23 +1,27 @@
 #!/usr/bin/sh
 
-GPU=7
+GPU=6
 # DEBUG=1 # comment this line if not in debug mode
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=snapshot/v1_basic/2018091413:42:43/snapshot__iter_35000.caffemodel #BHA step 0.01 100epoch
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
-MODEL=v1_threedeconv
+MODEL=v1_basic_bn
 
-HEIGHT=384
-WIDTH=512
+
+HEIGHT=224
+WIDTH=224
 STOPS=3
 BATCH=4
-LOSS=GBDLossLayer
+# LOSS=GBDLossLayer
+LOSS=L1LossLayer
 TRAIN_DS=salicon
-VAL_DS=salicon_val
+VAL_DS=salicon_val_small
 
 # Training setting variable
+BASE_LR=0.01
+
 # VAL_ITER=12500
-VAL_ITER=25000
+VAL_ITER=2500
 # VAL_EPOCH=20
 PLT_ITER=500
 EPOCH=100
@@ -47,7 +51,7 @@ if [ -z "$SNAPSHOT_DIR"];
     eval $CMD
     rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 
-    CMD="python generate_solver.py --network_path=$NET --solver_path=$SOLVER --snapshot_dir=$SNAPSHOT "
+    CMD="python generate_solver.py --network_path=$NET --solver_path=$SOLVER --snapshot_dir=$SNAPSHOT --base_lr=$BASE_LR"
     eval $CMD
     rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
     

@@ -17,6 +17,12 @@ class ImageDataset():
             self.density_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/density'
             self.saliency_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val2014/saliency'
 
+        elif ds_name == 'salicon_val_small':
+            self.frame_basedir= '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val_small/images'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val_small/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val_small/density'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val_small/saliency'
+
         elif ds_name=='hdreye_hdr':
             self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/HDR'
             self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'

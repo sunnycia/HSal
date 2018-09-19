@@ -105,12 +105,13 @@ while tranining_dataset.completed_epoch < max_epoch:
         print "INFO: step %s, doing validation" % str(_step)
         # do validation for validation set, and plot average 
         # metric(cc, sim, auc, kld, nss) performance dictionary
-        validation(step=_step,
+        validation_dic = validation(step=_step,
                    solver_instance=solver, 
                    dataset_instance=validation_dataset,
                    snapshot_dir = args.snapshot,
                    stops=args.stops)
         validation_dataset.completed_epoch=0
+
         # pass
     frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops)
 

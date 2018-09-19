@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 def write_solver(solver_path,
                  net_path, 
                  snapshot_dir,
+                 base_lr,
                  config_dict={}):
 
     my_project_root = "./"
@@ -18,7 +19,7 @@ def write_solver(solver_path,
         os.makedirs(snapshot_dir)
     sovler_string.snapshot_prefix = snapshot_dir+'/snapshot_'
     
-    sovler_string.base_lr = 0.001
+    sovler_string.base_lr = base_lr
     sovler_string.momentum = 0.9
     sovler_string.weight_decay = 0.0001
 
@@ -45,9 +46,11 @@ if __name__ == '__main__':
     parser.add_argument('--network_path', type=str,default='prototxt/train.prototxt')
     parser.add_argument('--solver_path', type=str,default='prototxt/solver.prototxt')
     parser.add_argument('--snapshot_dir', type=str)
+    parser.add_argument('--base_lr', type=float)
     args = parser.parse_args()
 
     # write_solver(snapshot_dir='snapshot/basic_v1/')
     write_solver(solver_path=args.solver_path,
                  net_path=args.network_path, 
-                 snapshot_dir=args.snapshot_dir)
+                 snapshot_dir=args.snapshot_dir,
+                 base_lr=args.base_lr)
