@@ -1,4 +1,4 @@
-train_net: "./prototxt/v1_basic_bn.prototxt"
+train_net: "./prototxt/v1_origin.prototxt"
 base_lr: 0.00999999977648
 display: 50
 max_iter: 1000000
@@ -8,5 +8,5 @@ power: 0.0
 momentum: 0.899999976158
 weight_decay: 9.99999974738e-05
 snapshot: 10000
-snapshot_prefix: "snapshot/v1_basic_bn/2018091920:05:58/snapshot_"
+snapshot_prefix: "snapshot/v1_origin_debug/2018091921:30:16/snapshot_"
 solver_mode: GPU

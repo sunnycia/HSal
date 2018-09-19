@@ -88,24 +88,27 @@ class ImageDataset():
         end = self.index_in_epoch
         return self.frame_path_list[start:end], self.density_path_list[start:end]
 
-    def next_batch(self, batch_size):
+    def next_batch(self, batch_size, stops):
         """Return the next `batch_size` examples from this data set."""
-        self.batch_frame_path_list, self.batch_density_path_list = self.get_batch_path(batch_size)
+        if stops>1:
+            return self.next_hdr_batch(batch_size, stops)
+        else:
+            self.batch_frame_path_list, self.batch_density_path_list = self.get_batch_path(batch_size)
 
-        batch_frame_list =[]
-        batch_density_list =[]
-        for (frame_path, density_path) in zip(self.batch_frame_path_list, self.batch_density_path_list):
-            # assert frame_path
-            frame = cv2.imread(frame_path).astype(np.float32)
-            density = cv2.imread(density_path, 0).astype(np.float32)
+            batch_frame_list =[]
+            batch_density_list =[]
+            for (frame_path, density_path) in zip(self.batch_frame_path_list, self.batch_density_path_list):
+                # assert frame_path
+                frame = cv2.imread(frame_path).astype(np.float32)
+                density = cv2.imread(density_path, 0).astype(np.float32)
 
-            frame =self.pre_process_img(frame, False)
-            density = self.pre_process_img(density, True)
-            batch_frame_list.append(frame)
-            batch_density_list.append(density)
-            # if len(batch_frame_list) %  == 0:
-            #     print len(self.data), '\r',
-        return np.array(batch_frame_list), np.array(batch_density_list)
+                frame =self.pre_process_img(frame, False)
+                density = self.pre_process_img(density, True)
+                batch_frame_list.append(frame)
+                batch_density_list.append(density)
+                # if len(batch_frame_list) %  == 0:
+                #     print len(self.data), '\r',
+            return np.array(batch_frame_list), np.array(batch_density_list)
 
 
     # return np.array(image_list)

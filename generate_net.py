@@ -79,7 +79,7 @@ def Data_python(name, tops, param_str='2,3,600,800'):
     layer.python_param.param_str = param_str
     return layer
 
-def Conv(name, bottom, num_output, kernel_size, stride, pad):
+def Conv(name, bottom, num_output, kernel_size, stride, pad, have_bias=False):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
     layer.type = 'Convolution'
@@ -90,7 +90,7 @@ def Conv(name, bottom, num_output, kernel_size, stride, pad):
     layer.convolution_param.stride.extend([stride])
     layer.convolution_param.pad.extend([pad])
     layer.convolution_param.weight_filler.type = 'msra'
-    layer.convolution_param.bias_term = False
+    layer.convolution_param.bias_term = have_bias
     layer.param.extend(_get_param(1))
     return layer
 
@@ -149,19 +149,21 @@ def Bilinear_upsample(name, bottom, num_output, factor):
     layer.param.extend(_get_param(1))
     return layer
 
-def Bn_Sc(name, bottom):
+def Bn_Sc(name, bottom, keep_name=False):
     top_name=name
     name=name.replace('res', '')
     # BN
 
     bn_layer = caffe_pb2.LayerParameter()
-    bn_layer.name = 'bn' + name
+    if not keep_name:
+        bn_layer.name = 'bn' + name
     bn_layer.type = 'BatchNorm'
     bn_layer.bottom.extend([bottom])
     bn_layer.top.extend([top_name])
     # Scale
     scale_layer = caffe_pb2.LayerParameter()
-    scale_layer.name = 'scale'+name
+    if not keep_name:
+        scale_layer.name = 'scale'+name
     scale_layer.type = 'Scale'
     scale_layer.bottom.extend([top_name])
     scale_layer.top.extend([top_name])
@@ -306,7 +308,7 @@ configs = {
     200: [3, 24, 36, 3],
 }
 
-def v0_original(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
+def v1_origin(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
     model.name = 'ResNet_{}'.format(depth)
     num = configs[depth]
@@ -323,8 +325,9 @@ def v0_original(depth, batch, stops,height=600,width=800, loss='L1LossLayer',pha
     else:
         raise NotImplementedError
 
-    layers.append(Conv('conv1', 'data', 64, 7, 2, 3))
-    layers.extend(Bn_Sc('conv1', layers[-1].top[0]))
+
+    layers.append(Conv('conv1', 'data', 64, 7, 2, 3, have_bias=True))
+    layers.extend(Bn_Sc('conv1', layers[-1].top[0], True))
     layers.extend(Act('conv1', layers[-1].top[0]))
     layers.append(Pool('pool1', layers[-1].top[0], 'max', 3, 2, 0))
     layers.extend(ResLayer('res2', layers[-1].top[0], num[0], 64, 1, 'first'))
