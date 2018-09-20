@@ -26,7 +26,7 @@ def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
     	os.mkdir(validation_directory)
     # print dir(solver_instance), solver_instance.snapshot();exit()
     while dataset_instance.completed_epoch < 1:
-        frame_minibatch, _ = dataset_instance.next_hdr_batch(1,stops=stops)
+        frame_minibatch, _ = dataset_instance.next_batch(1,stops=stops)
 
         solver_instance.net.blobs['data'].data[...] = frame_minibatch
         # solver_instance.net.blobs['gt'].data[...] = density_minibatch
@@ -80,7 +80,9 @@ def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
         plt.ylabel(key)
         index+=1
         pkl.dump(val_list, open(pkl_path, 'wb'))
-    plt.savefig(os.path.join(snapshot_dir, "validation.png"))
+    fig_path = os.path.join(snapshot_dir, "validation.png")
+    plt.savefig(fig_path)
+    print "INFO: validation figure saved to", fig_path
     plt.clf()
 
 
