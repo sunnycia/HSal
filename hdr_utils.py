@@ -27,9 +27,9 @@ def float2rgb(float_img):
     low=np.where(v<1e-32)
     v2=v;
 
-def split(hdr, gamma_diplay=2.2, viz=False,stops=10,method='naive'):
+def split(hdr, gamma_display=2.2, viz=False,stops=10,method='naive'):
     ## split hdr into muiltiple exposure value
-    invGamma = 1.0 / gamma_diplay;
+    invGamma = 1.0 / gamma_display;
     hdr = hdr[:, :, ::-1]
     # get luminance from a hdr input
     lum_map = lum(hdr)

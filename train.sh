@@ -1,12 +1,12 @@
 #!/usr/bin/sh
 
-GPU=5
-# DEBUG=1 # comment this line if not in debug mode
+GPU=7
+DEBUG=1 # comment this line if not in debug mode
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=snapshot/v1_basic/2018091413:42:43/snapshot__iter_35000.caffemodel #BHA step 0.01 100epoch
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
-MODEL=v1_origin_3de
-STOPS=1
+MODEL=v1_multi_1
+STOPS=3
 
 
 HEIGHT=224
@@ -20,7 +20,7 @@ TRAIN_DS=salicon
 VAL_DS=salicon_val_small
 
 # Training setting variable
-BASE_LR=0.0001
+BASE_LR=0.01
 LR_POLICY='step'
 
 # VAL_ITER=12500
@@ -45,7 +45,6 @@ else
     SOLVER=prototxt/solver.prototxt
     NET=prototxt/$MODEL.prototxt
 fi
-
 
 export CUDA_VISIBLE_DEVICES=$GPU
 if [ -z "$SNAPSHOT_DIR"];

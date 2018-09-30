@@ -86,6 +86,12 @@ else:
     shutil.copyfile('train.sh', os.path.join(snapshot_path, 'train.sh'))
     solver.net.copy_from(args.pretrained_model)
 
+    if 'v1_multi_1.' in network_path:
+        # load conv param
+        for i in range(args.stops):
+            weight = np.load('misc/weight/conv1.npy')
+            solver.net.params['conv1_%s'%str(i)] = weight
+
     x=[]
     y=[]
     _step=0

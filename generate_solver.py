@@ -8,6 +8,7 @@ def write_solver(solver_path,
                  net_path, 
                  snapshot_dir,
                  base_lr,
+                 lr_policy,
                  config_dict={}):
 
     my_project_root = "./"
@@ -25,12 +26,17 @@ def write_solver(solver_path,
 
 
     sovler_string.lr_policy = 'inv'
-    ###'inv' setting
-    # sovler_string.power = 0.75
-    # sovler_string.gamma = 0.0005
-    ###'step' setting
-    sovler_string.power = 0.0
-    sovler_string.gamma = 0.0
+    if lr_policy=='step':
+        ###'step' setting
+        sovler_string.power = 0.0
+        sovler_string.gamma = 0.0
+    elif lr_policy=='inv':
+        ###'inv' setting
+        sovler_string.power = 0.75
+        sovler_string.gamma = 0.0005
+    else:
+        raise NotImplementedError
+    
 
 
     sovler_string.display = 50
@@ -47,10 +53,12 @@ if __name__ == '__main__':
     parser.add_argument('--solver_path', type=str,default='prototxt/solver.prototxt')
     parser.add_argument('--snapshot_dir', type=str)
     parser.add_argument('--base_lr', type=float)
+    parser.add_argument('--lr_policy', type=str)
     args = parser.parse_args()
 
     # write_solver(snapshot_dir='snapshot/basic_v1/')
     write_solver(solver_path=args.solver_path,
                  net_path=args.network_path, 
                  snapshot_dir=args.snapshot_dir,
-                 base_lr=args.base_lr)
+                 base_lr=args.base_lr,
+                 lr_policy=args.lr_policy)
