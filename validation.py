@@ -5,9 +5,6 @@ import cv2
 import numpy as np
 from saliency_metric.benchmark.metrics import *
 
-
-
-
 def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
 
     loss_list = []
@@ -37,7 +34,8 @@ def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
 
 
         prediction = prediction-np.min(prediction)
-        prediction = prediction/np.max(prediction)
+        print np.max(prediction)
+        prediction = prediction/(np.max(prediction)+1e-8)
         prediction = prediction * 255
         # print prediction[0]
         density_map = cv2.imread(dataset_instance.batch_density_path_list[0], 0).astype(np.float32)

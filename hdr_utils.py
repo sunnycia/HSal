@@ -78,15 +78,15 @@ def split(hdr, gamma_display=2.2, viz=False,stops=10,method='naive'):
     #     lum_list+=min_lum*
 
 
-def tmo(hdr, tmo_func='reinhard', gamma=2.2):
+def tonemapping(hdr, tmo_func='reinhard', gamma=2.2):
     ## tone mapping hdr
     if tmo_func=='reinhard':
         tmo = cv2.createTonemapReinhard(gamma=gamma)
-    elif tmo_func =='Durand':
+    elif tmo_func =='durand':
         tmo = cv2.createTonemapDurand(gamma=gamma)
-    elif tmo_func =='Drago':
+    elif tmo_func =='drago':
         tmo = cv2.createTonemapDrago(gamma=gamma)
-    elif tmo_func =='Mantiuk':
+    elif tmo_func =='mantiuk':
         tmo = cv2.createTonemapMantiuk(gamma=gamma)
     elif tmo_func =='linear':
         output = hdr - hdr.min()

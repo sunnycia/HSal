@@ -49,10 +49,11 @@ validation_dataset = ImageDataset(ds_name=args.validation_ds,img_size=(args.widt
 
 
 if args.debug:
-    max_epoch=10
+    max_epoch=100
     # validation_epoch=2
     validation_iter=50
     plot_iter=25
+    validation_dataset = ImageDataset(ds_name=args.training_ds,img_size=(args.width, args.height), debug=args.debug)
 else:
     max_epoch = args.max_epoch
     # validation_epoch = args.val_epoch
@@ -88,6 +89,7 @@ else:
 
     if 'v1_multi_1.' in network_path:
         # load conv param
+        print "load conv1 param from pretrained."
         for i in range(args.stops):
             weight = np.load('misc/weight/conv1.npy')
             solver.net.params['conv1_%s'%str(i)] = weight
