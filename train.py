@@ -7,6 +7,7 @@ import cPickle as pkl
 import numpy as np
 import caffe
 from validation import validation
+from generate_net import parse_weight
 
 caffe.set_mode_gpu()
 
@@ -41,12 +42,10 @@ def get_arguments():
 print "Parsing arguments..."
 args = get_arguments()
 
-
 ##
 print "Loading data..."
 tranining_dataset = ImageDataset(ds_name=args.training_ds,img_size=(args.width, args.height), debug=args.debug)
 validation_dataset = ImageDataset(ds_name=args.validation_ds,img_size=(args.width, args.height), debug=args.debug)
-
 
 if args.debug:
     max_epoch=100
@@ -64,6 +63,7 @@ else:
 solver_path = args.solver
 network_path = args.network
 solver = caffe.SGDSolver(solver_path)
+
 if args.snapshot_dir:
     pass
     plot_figure_dir = os.path.join(args.snapshot_dir, 'figure')
@@ -85,14 +85,16 @@ else:
     shutil.copyfile(solver_path, os.path.join(snapshot_path, os.path.basename(solver_path)))
     shutil.copyfile(network_path, os.path.join(snapshot_path, os.path.basename(network_path)))
     shutil.copyfile('train.sh', os.path.join(snapshot_path, 'train.sh'))
-    solver.net.copy_from(args.pretrained_model)
+    
 
-    if 'v1_multi_1.' in network_path:
-        # load conv param
-        print "load conv1 param from pretrained."
-        for i in range(args.stops):
-            weight = np.load('misc/weight/conv1.npy')
-            solver.net.params['conv1_%s'%str(i)] = weight
+    solver = parse_weight(solver, args.pretrained_model, network_path)
+    # solver.net.copy_from(args.pretrained_model)
+    # if 'v1_multi_1.' in network_path:
+    #     # load conv param
+    #     print "load conv1 param from pretrained."
+    #     for i in range(args.stops):
+    #         weight = np.load('misc/resnet_weight/conv1.npy')
+    #         solver.net.params['conv1_%s'%str(i)] = weight
 
     x=[]
     y=[]
