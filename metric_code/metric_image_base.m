@@ -27,12 +27,15 @@ end
 if ~exist('save_base', 'var')
     printf('save_base variable not exists')
 end
-
+if ~exist('other_num', 'var')
+    printf('other_num variable not exists')
+end
 
 cc_msk  = 1;
 sim_msk = 1;
 jud_msk = 1;
 bor_msk = 0;
+sauc_msk = 1;
 kl_msk  = 1;
 nss_msk = 1;
 
@@ -59,6 +62,7 @@ saliency_score_CC = zeros(1,LengthFiles);
 saliency_score_SIM = zeros(1,LengthFiles);
 saliency_score_JUD = zeros(1,LengthFiles);
 saliency_score_BOR = zeros(1,LengthFiles);
+saliency_score_SAUC = zeros(1,LengthFiles);
 saliency_score_KL = zeros(1,LengthFiles);
 saliency_score_NSS = zeros(1,LengthFiles);
 
@@ -73,6 +77,7 @@ for j = 1 : LengthFiles
     fprintf('Handling %s', smap_path);
 
     image_saliency = imread(smap_path);
+    image_saliency = rgb2gray(image_saliency);
     image_density = imread(density_path);
     image_fixation = imread(fixation_path);
     % other_map=zeros(1080, 1920);
@@ -95,6 +100,7 @@ for j = 1 : LengthFiles
     if jud_msk
         %% AUCJUDD %%
         saliency_score_JUD(j) = AUC_Judd(image_saliency, image_fixation);
+        fprintf('jud value %s\n', saliency_score_JUD(j));
     end
     
     if bor_msk
@@ -102,6 +108,13 @@ for j = 1 : LengthFiles
         saliency_score_BOR(j) = AUC_Borji(image_saliency, image_fixation);
     end
     
+
+    if sauc_msk
+        %% AUCBorji %%
+
+        saliency_score_SAUC(j) = AUC_shuffled(image_saliency, image_fixation, othermap(other_num, fixa_dir, row, col), 100, .1);
+        fprintf('sauc value %s\n', saliency_score_SAUC(j));
+    end
     if kl_msk
         %% KL %%
         saliency_score_KL(j) = KLdiv(image_saliency, image_density);
@@ -113,12 +126,15 @@ for j = 1 : LengthFiles
     
     [saliency_score_CC(j);saliency_score_SIM(j);
                 saliency_score_JUD(j);saliency_score_BOR(j);
-                saliency_score_KL(j);saliency_score_NSS(j);]
+                saliency_score_SAUC(j);saliency_score_KL(j);
+                saliency_score_NSS(j);]
 end
 
 saliency_score=[saliency_score_CC;saliency_score_SIM;
                 saliency_score_JUD;saliency_score_BOR;
-                saliency_score_KL;saliency_score_NSS;]
+                saliency_score_SAUC;saliency_score_KL;
+                saliency_score_NSS;]
+
 t2=clock;
 time_cost=etime(t2,t1);
 

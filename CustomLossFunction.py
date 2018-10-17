@@ -90,6 +90,8 @@ class L2LossLayer(caffe.Layer):
             bottom[i].diff[...] = sign * loss_wgt * self.diff / bottom[i].num
 
 class KLLossLayer(caffe.Layer):
+    np.seterr(divide='ignore', invalid='ignore')
+
     """
     Compute the Euclidean loss.
     """
@@ -105,6 +107,8 @@ class KLLossLayer(caffe.Layer):
         top[0].reshape(1)
 
     def forward(self, bottom, top):
+        epsilon = np.finfo(np.float).eps # epsilon (float or float 32)
+
         # softmax and reshaping for the ground truth heatmap
         gts = np.empty_like(bottom[0].data)
         for i in range(bottom[0].data.shape[0]):
@@ -114,7 +118,7 @@ class KLLossLayer(caffe.Layer):
             gt = gt/255.0
             # softmax normalization to obtain probability distribution
             gt_exp = np.exp(gt-np.max(gt))
-            gt_snorm = gt_exp/np.sum(gt_exp)
+            gt_snorm = gt_exp/(np.sum(gt_exp))
             # back into original block
             gt = np.transpose(gt_snorm[:,:,np.newaxis,np.newaxis],(3,2,0,1))
             gts[i,:,:,:] = gt
@@ -126,7 +130,7 @@ class KLLossLayer(caffe.Layer):
             pmap = np.transpose(bottom[0].data[i,:,:,:],(1,2,0)).squeeze()
             # apply softmax normalization to obtain a probability distribution
             pmap_exp = np.exp(pmap-np.max(pmap)) # range is now 0 to 1
-            pmap_snorm = pmap_exp/np.sum(pmap_exp)
+            pmap_snorm = pmap_exp/(np.sum(pmap_exp))
             # back into original block
             pmap = np.transpose(pmap_snorm[:,:,np.newaxis,np.newaxis],(3,2,0,1))
             preds[i,:,:,:] = pmap
@@ -134,13 +138,12 @@ class KLLossLayer(caffe.Layer):
 
         # compute log and difference of log values
         # pdb.set_trace()
-        epsilon = np.finfo(np.float).eps # epsilon (float or float 32)
+        
         gt_ln = np.log(np.maximum(gt,epsilon))
         pmap_ln = np.log( np.maximum(pmap,epsilon))
         loss = gt*(gt_ln-pmap_ln)
         # compute combined loss
         top[0].data[...] = np.sum(loss) / bottom[0].num
-
         # # calculate value for bkward pass - self.diff = dl/dpk
         # for hind in range(pmap.shape[2]):
         #   for wind in range(pmap.shape[3]):
@@ -152,6 +155,7 @@ class KLLossLayer(caffe.Layer):
         #       self.diff[:,:,hind,wind] = -1*( np.sum(np.sum(gt*(1-pmap)*iequalk,axis=3),axis=2) - pmap[:,:,hind,wind]*np.sum(np.sum(gt*inotequalk,axis=3),axis=2) )
 
         self.diff = gt * pmap - (gt * (1 - pmap))
+        print pmap.max(), np.sum(loss) / bottom[0].num
 
     def backward(self, top, propagate_down, bottom):    
         loss_wgt = top[0].diff
@@ -175,6 +179,7 @@ class sKLLossLayer(caffe.Layer):
 
     def reshape(self, bottom, top):
         # difference is shape of prediction
+
         self.diff = np.zeros_like(bottom[0].data, dtype=np.float32)
         # loss output  is scalar
         top[0].reshape(1)
@@ -190,6 +195,19 @@ class sKLLossLayer(caffe.Layer):
 
         # ground truth
         gt = bottom[1].data
+        # gts = np.empty_like(bottom[0].data)
+        # for i in range(bottom[0].data.shape[0]):
+        #     # pdb.set_trace()
+        #     gt = np.transpose(bottom[1].data[i,:,:,:],(1,2,0)).squeeze()
+        #     gt = scimisc.imresize(gt,bottom[0].data.shape[2:4],interp='bilinear')
+        #     gt = gt/255.0
+        #     # softmax normalization to obtain probability distribution
+        #     gt_exp = np.exp(gt-np.max(gt))
+        #     gt_snorm = gt_exp/np.sum(gt_exp)
+        #     # back into original block
+        #     gt = np.transpose(gt_snorm[:,:,np.newaxis,np.newaxis],(3,2,0,1))
+        #     gts[i,:,:,:] = gt
+        # gt = gts
 
         # compute log and difference of log values
         epsilon = np.finfo(np.float).eps # epsilon (float or float 32)

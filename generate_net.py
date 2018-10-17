@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import os.path as osp
 import sys
@@ -21,7 +22,6 @@ def _get_include(phase):
     else:
         raise ValueError("Unknown phase {}".format(phase))
     return inc
-
 
 def _get_param(num_param, lr_mult=1):
     if num_param == 1:
@@ -867,7 +867,6 @@ def v1_multi_2(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phas
     model.layer.extend(layers)
     return model
 
-
 def v2_multi_earlyconcat_vgg16(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
     model.name = 'ResNet_{}'.format(depth)
@@ -890,55 +889,55 @@ def v2_multi_earlyconcat_vgg16(depth, batch, stops,height=600,width=800, loss='L
 
     bottom_list = []
     for i in range(1, stops+1):
-        layers.append(Conv('conv1_1_%s'%str(i), 'data_%s'%str(i), 64, 3, 1, 1,lr_mult=0))
+        layers.append(Conv('conv1_1_%s'%str(i), 'data_%s'%str(i), 64, 3, 1, 1,lr_mult=0,have_bias=True))
         layers.extend(Act('conv1_1_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv1_2_%s'%str(i), 'data_%s'%str(i), 64, 3, 1, 1,lr_mult=0))
+        layers.append(Conv('conv1_2_%s'%str(i), layers[-1].top[0], 64, 3, 1, 1,lr_mult=0,have_bias=True))
         layers.extend(Act('conv1_2_%s'%str(i), layers[-1].top[0]))
         layers.append(Pool('conv1_2_%s'%str(i), layers[-1].top[0], 'max', 2, 2, 0))
 
-        layers.append(Conv('conv2_1_%s'%str(i), 'data_%s'%str(i), 128, 3, 1, 1,lr_mult=0))
+        layers.append(Conv('conv2_1_%s'%str(i), layers[-1].top[0], 128, 3, 1, 1,lr_mult=0,have_bias=True))
         layers.extend(Act('conv2_1_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv2_2_%s'%str(i), 'data_%s'%str(i), 128, 3, 1, 1,lr_mult=0))
+        layers.append(Conv('conv2_2_%s'%str(i), layers[-1].top[0], 128, 3, 1, 1,lr_mult=0,have_bias=True))
         layers.extend(Act('conv2_2_%s'%str(i), layers[-1].top[0]))
         layers.append(Pool('conv2_2_%s'%str(i), layers[-1].top[0], 'max', 2, 2, 0))
 
         bottom_list.append('conv2_2_%s'%str(i))
 
-    layers.extend(Concat('feat_concat', bottom_list))
+    # layers.extend(Concat('feat_concat', bottom_list))
+    # layers.append(Conv('concat_conv', layers[-1].top[0], 128, 3, 1, 1, lr_mult=0.1,have_bias=True))
+    # layers.extend(Act('concat_conv', layers[-1].top[0]))
+    layers.extend(Eltwise('max_out', bottom_list, operation=2))
 
-    layers.append(Conv('concat_conv', layers[-1].top[0], 128, 3, 1, 1, lr_mult=0.1))
-    layers.extend(Act('concat_conv', layers[-1].top[0]))
-
-    layers.append(Conv('conv3_1', 'data_%s'%str(i), 256, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv3_1', layers[-1].top[0], 256, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv3_1', layers[-1].top[0]))
-    layers.append(Conv('conv3_2', 'data_%s'%str(i), 256, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv3_2', layers[-1].top[0], 256, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv3_2', layers[-1].top[0]))
-    layers.append(Conv('conv3_3', 'data_%s'%str(i), 256, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv3_3', layers[-1].top[0], 256, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv3_3', layers[-1].top[0]))
     layers.append(Pool('conv3_3', layers[-1].top[0], 'max', 2, 2, 0))
 
-    layers.append(Conv('conv4_1', 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv4_1', layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv4_1', layers[-1].top[0]))
-    layers.append(Conv('conv4_2', 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv4_2', layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv4_2', layers[-1].top[0]))
-    layers.append(Conv('conv4_3', 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv4_3', layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv4_3', layers[-1].top[0]))
     layers.append(Pool('conv4_3', layers[-1].top[0], 'max', 2, 2, 0))
 
-    layers.append(Conv('conv5_1', 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv5_1', layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv5_1', layers[-1].top[0]))
-    layers.append(Conv('conv5_2', 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv5_2', layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv5_2', layers[-1].top[0]))
-    layers.append(Conv('conv5_3', 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+    layers.append(Conv('conv5_3', layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
     layers.extend(Act('conv5_3', layers[-1].top[0]))
     
-    layers.append(Conv('conv6', 'data_%s'%str(i), 32, 3, 1, 1,lr_mult=1))
+    layers.append(Conv('conv6', layers[-1].top[0], 32, 3, 1, 1,lr_mult=1,have_bias=True))
     layers.extend(Act('conv6', layers[-1].top[0]))
-    layers.append(Conv('conv7', 'data_%s'%str(i), 8, 3, 1, 1,lr_mult=1))
+    layers.append(Conv('conv7', layers[-1].top[0], 8, 3, 1, 1,lr_mult=1,have_bias=True))
     layers.extend(Act('conv7', layers[-1].top[0]))
-    layers.append(Conv('conv8', 'data_%s'%str(i), 1, 3, 1, 1,lr_mult=1))
+    layers.append(Conv('conv8', layers[-1].top[0], 1, 3, 1, 1,lr_mult=1,have_bias=True))
 
-    layers.append(Bilinear_upsample('upsample', 'conv8', 1, 4, lr_mult=0))
+    layers.append(Bilinear_upsample('predict', 'conv8', 1, 16, lr_mult=0))
 
     if phase=='train':
         layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
@@ -949,7 +948,6 @@ def v2_multi_earlyconcat_vgg16(depth, batch, stops,height=600,width=800, loss='L
 
     model.layer.extend(layers)
     return model
-
 
 def v2_multi_lateconcat_vgg16(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
@@ -973,56 +971,56 @@ def v2_multi_lateconcat_vgg16(depth, batch, stops,height=600,width=800, loss='L1
 
     bottom_list = []
     for i in range(1, stops+1):
-        layers.append(Conv('conv1_1_%s'%str(i), 'data_%s'%str(i), 64, 3, 1, 1,lr_mult=0))
+        layers.append(Conv('conv1_1_%s'%str(i), 'data_%s'%str(i), 64, 3, 1, 1,lr_mult=0,have_bias=True))
         layers.extend(Act('conv1_1_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv1_2_%s'%str(i), 'data_%s'%str(i), 64, 3, 1, 1,lr_mult=0))
+        layers.append(Conv('conv1_2_%s'%str(i), layers[-1].top[0], 64, 3, 1, 1,lr_mult=0,have_bias=True))
         layers.extend(Act('conv1_2_%s'%str(i), layers[-1].top[0]))
         layers.append(Pool('conv1_2_%s'%str(i), layers[-1].top[0], 'max', 2, 2, 0))
 
-        layers.append(Conv('conv2_1_%s'%str(i), 'data_%s'%str(i), 128, 3, 1, 1,lr_mult=0))
+        layers.append(Conv('conv2_1_%s'%str(i), layers[-1].top[0], 128, 3, 1, 1,lr_mult=0,have_bias=True))
         layers.extend(Act('conv2_1_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv2_2_%s'%str(i), 'data_%s'%str(i), 128, 3, 1, 1,lr_mult=0))
+        layers.append(Conv('conv2_2_%s'%str(i), layers[-1].top[0], 128, 3, 1, 1,lr_mult=0,have_bias=True))
         layers.extend(Act('conv2_2_%s'%str(i), layers[-1].top[0]))
         layers.append(Pool('conv2_2_%s'%str(i), layers[-1].top[0], 'max', 2, 2, 0))
 
 
-        layers.append(Conv('conv3_1_%s'%str(i), 'data_%s'%str(i), 256, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv3_1_%s'%str(i), layers[-1].top[0], 256, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv3_1_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv3_2_%s'%str(i), 'data_%s'%str(i), 256, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv3_2_%s'%str(i), layers[-1].top[0], 256, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv3_2_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv3_3_%s'%str(i), 'data_%s'%str(i), 256, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv3_3_%s'%str(i), layers[-1].top[0], 256, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv3_3_%s'%str(i), layers[-1].top[0]))
         layers.append(Pool('conv3_3_%s'%str(i), layers[-1].top[0], 'max', 2, 2, 0))
 
-        layers.append(Conv('conv4_1_%s'%str(i), 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv4_1_%s'%str(i), layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv4_1_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv4_2_%s'%str(i), 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv4_2_%s'%str(i), layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv4_2_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv4_3_%s'%str(i), 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv4_3_%s'%str(i), layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv4_3_%s'%str(i), layers[-1].top[0]))
         layers.append(Pool('conv4_3_%s'%str(i), layers[-1].top[0], 'max', 2, 2, 0))
 
-        layers.append(Conv('conv5_1_%s'%str(i), 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv5_1_%s'%str(i), layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv5_1_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv5_2_%s'%str(i), 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv5_2_%s'%str(i), layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv5_2_%s'%str(i), layers[-1].top[0]))
-        layers.append(Conv('conv5_3_%s'%str(i), 'data_%s'%str(i), 512, 3, 1, 1,lr_mult=0.1))
+        layers.append(Conv('conv5_3_%s'%str(i), layers[-1].top[0], 512, 3, 1, 1,lr_mult=0.1,have_bias=True))
         layers.extend(Act('conv5_3_%s'%str(i), layers[-1].top[0]))
 
         bottom_list.append('conv5_3_%s'%str(i))
 
-    layers.extend(Concat('feat_concat', bottom_list))
+    layers.extend(Eltwise('max_out', bottom_list, operation=2))
+    # layers.extend(Concat('feat_concat', bottom_list))
+    # layers.append(Conv('concat_conv', layers[-1].top[0], 512, 3, 1, 1, lr_mult=0.1))
+    # layers.extend(Act('concat_conv', layers[-1].top[0]))
 
-    layers.append(Conv('concat_conv', layers[-1].top[0], 512, 3, 1, 1, lr_mult=0.1))
-    layers.extend(Act('concat_conv', layers[-1].top[0]))
+    layers.append(Conv('conv6', layers[-1].top[0], 32, 3, 1, 1,lr_mult=1,have_bias=True))
+    layers.extend(Act('conv6', layers[-1].top[0]))
+    layers.append(Conv('conv7', layers[-1].top[0], 8, 3, 1, 1,lr_mult=1,have_bias=True))
+    layers.extend(Act('conv7', layers[-1].top[0]))
+    layers.append(Conv('conv8', layers[-1].top[0], 1, 3, 1, 1,lr_mult=1,have_bias=True))
 
-    layers.append(Conv('conv6', 'data_%s'%str(i), 32, 3, 2, 3,lr_mult=1))
-    layers.extend(Act('concat_conv', layers[-1].top[0]))
-    layers.append(Conv('conv7', 'data_%s'%str(i), 8, 3, 2, 3,lr_mult=1))
-    layers.extend(Act('concat_conv', layers[-1].top[0]))
-    layers.append(Conv('conv8', 'data_%s'%str(i), 1, 3, 2, 3,lr_mult=1))
-
-    layers.append(Bilinear_upsample('upsample', 'conv8', 1, 4, lr_mult=0))
+    layers.append(Bilinear_upsample('predict', 'conv8', 1, 16, lr_mult=0))
 
     if phase=='train':
         layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
@@ -1033,8 +1031,6 @@ def v2_multi_lateconcat_vgg16(depth, batch, stops,height=600,width=800, loss='L1
 
     model.layer.extend(layers)
     return model
-
-
 
 # def v2_luminance()
 #     model = caffe_pb2.NetParameter()
@@ -1081,21 +1077,21 @@ def v2_multi_lateconcat_vgg16(depth, batch, stops,height=600,width=800, loss='L1
 #     return model
 
 
-def parse_weight(solver, pretrained_model, model_path):
+def parse_weight(solver, pretrained_model, model_path, stops):
     ##get model verstion name
     model = os.path.splitext(os.path.basename(model_path))[0]
     solver.net.copy_from(pretrained_model)
-    if 'v1_multi_1.' in model:
+    if 'v1_multi_1' in model:
         # load conv param
         print "load conv1 param from pretrained."
-        for i in range(args.stops):
+        for i in range(stops):
             weight = np.load('misc/resnet_weight/conv1.npy')
             solver.net.params['conv1_%s'%str(i+1)] = weight
 
-    if 'v2_multi_earlyconcat_vgg16.' in model:
+    if 'v2_multi_earlyconcat_vgg16' in model:
         # load conv param
         print "load vgg16 param from pretrained."
-        for i in range(args.stops):
+        for i in range(stops):
             for j in range(2):
                 param_path = 'misc/vgg16_weight/conv%s_1.npy'%str(j+1)
                 layer_name='conv%s_1_%s'%(str(j+1), str(i+1))
@@ -1110,16 +1106,16 @@ def parse_weight(solver, pretrained_model, model_path):
                 weight = np.load(param_path)
                 solver.net.params[layer_name] = weight
 
-    if 'v2_multi_lateconcat_vgg16.' in model:
+    if 'v2_multi_lateconcat_vgg16' in model:
         # load conv param
         print "load vgg16 param from pretrained."
-        for i in range(args.stops):
+        for i in range(stops):
             for j in range(2):
                 param_path = 'misc/vgg16_weight/conv%s_1.npy'%str(j+1)
                 layer_name='conv%s_1_%s'%(str(j+1), str(i+1))
                 print 'copy %s to %s' %(param_path, layer_name)
                 weight = np.load(param_path)
-                solver.net.params[weight] = weight
+                solver.net.params[layer_name] = weight
 
                 param_path = 'misc/vgg16_weight/conv%s_2.npy'%str(j+1)
                 layer_name='conv%s_2_%s'%(str(j+1), str(i+1))
@@ -1127,7 +1123,7 @@ def parse_weight(solver, pretrained_model, model_path):
                 weight = np.load(param_path)
                 solver.net.params[layer_name] = weight
 
-        for i in range(args.stops):
+        for i in range(stops):
             for j in range(2, 5):
                 param_path = 'misc/vgg16_weight/conv%s_1.npy'%str(j+1)
                 layer_name = 'conv%s_1_%s'%(str(j+1), str(i+1))

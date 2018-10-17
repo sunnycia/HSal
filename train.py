@@ -87,7 +87,7 @@ else:
     shutil.copyfile('train.sh', os.path.join(snapshot_path, 'train.sh'))
     
 
-    solver = parse_weight(solver, args.pretrained_model, network_path)
+    solver = parse_weight(solver, args.pretrained_model, network_path, args.stops)
     # solver.net.copy_from(args.pretrained_model)
     # if 'v1_multi_1.' in network_path:
     #     # load conv param

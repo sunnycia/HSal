@@ -14,6 +14,7 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dsname', type=str, default='hdreye_hdr', help='training dataset')
     parser.add_argument('--metric_dir', type=str, default='../matlab-metric', help='training dataset')
+    parser.add_argument('--other_num', type=int, default=10, help='parameter of sauc')
 
     return parser.parse_args()
 
@@ -30,20 +31,24 @@ fixa_dir = ds.fixation_basedir
 
 
 sal_subdir_list =  [ name for name in os.listdir(sal_base) if os.path.isdir(os.path.join(sal_base, name)) ]
-finish_list = []
+# finish_list = []
 
-finish_dict_path = os.path.join(sal_base, 'finish_list.pkl')
-if os.path.isfile(finish_dict_path):
-    finish_list = pkl.load(open(finish_dict_path, 'rb'))
-sal_subdir_list = list(set(sal_subdir_list)-set(finish_list))
-print sal_subdir_list
+# finish_dict_path = os.path.join(sal_base, 'finish_list.pkl')
+# if os.path.isfile(finish_dict_path):
+#     finish_list = pkl.load(open(finish_dict_path, 'rb'))
+# sal_subdir_list = list(set(sal_subdir_list)-set(finish_list))
+# print sal_subdir_list
+
 for sal_subdir in sal_subdir_list:
     sal_dir = os.path.join(sal_base, sal_subdir)
-    cmd = 'matlab -nodesktop -nosplash -nodisplay -r "addpath(\'metric_code\');save_base=\'%s\';dsname=\'%s\';sal_dir=\'%s\';dens_dir=\'%s\';fixa_dir=\'%s\';metric_image_base;exit()"' % (save_base, args.dsname, sal_dir, dens_dir, fixa_dir)
+    cmd = 'matlab -nodesktop -nosplash -nodisplay -r "addpath(\'metric_code\');save_base=\'%s\';dsname=\'%s\';sal_dir=\'%s\';dens_dir=\'%s\';fixa_dir=\'%s\';other_num=%s;metric_image_base;exit()"' % (save_base, args.dsname, sal_dir, dens_dir, fixa_dir,str(args.other_num))
     print cmd
-    os.system(cmd)
-    finish_list.append(sal_subdir)
-    pkl.dump(finish_list, open(finish_dict_path, 'wb'))
+    if os.path.isfile(os.path.join(save_base, args.dsname+'_'+sal_subdir+'.mat')):
+        continue
+    else:
+        os.system(cmd)
+    # finish_list.append(sal_subdir)
+    # pkl.dump(finish_list, open(finish_dict_path, 'wb'))
 
 
 # stastics

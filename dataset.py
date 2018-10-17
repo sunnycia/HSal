@@ -37,6 +37,16 @@ class ImageDataset():
             self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/LDR-JPG'
             self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
             self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/sdr_saliency_map'
+        elif ds_name=='hdreye_linear':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/linear'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
+            self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/linear'
+        elif ds_name=='hdreye_reinhard':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/reinhard'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
+            self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/reinhard'
         else:
             raise NotImplementedError
 

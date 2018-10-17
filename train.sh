@@ -1,28 +1,29 @@
 #!/usr/bin/sh
 
-GPU=6
+GPU=5
 # DEBUG=1 # comment this line if not in debug mode
 PRE_MODEL=misc/ResNet-50-model.caffemodel
-# PRE_MODEL=snapshot/v1_basic/2018091413:42:43/snapshot__iter_35000.caffemodel #BHA step 0.01 100epoch
+# PRE_MODEL=misc/VGG_ILSVRC_16_layers.caffemodel #BHA step 0.01 100epoch
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
 MODEL=v1_multi_1
+# MODEL=v2_multi_lateconcat_vgg16
 STOPS=3
 
 
 HEIGHT=224
 WIDTH=224
-BATCH=4
+BATCH=16
 
 # LOSS=L1LossLayer
-LOSS=sKLLossLayer
+LOSS=KLLossLayer
 # LOSS=GBDLossLayer
 TRAIN_DS=salicon
 VAL_DS=hdreye_hdr
 # VAL_DS=salicon_val_small
 
 # Training setting variable
-# BASE_LR=0.01
-BASE_LR=0.01
+BASE_LR=0.0001
+# BASE_LR=0.0000001
 LR_POLICY='step'
 
 # VAL_ITER=12500
@@ -30,7 +31,6 @@ VAL_ITER=2500
 # VAL_EPOCH=20
 PLT_ITER=500
 EPOCH=100
-
 
 
 TS=`date "+%Y%m%d%T"`
