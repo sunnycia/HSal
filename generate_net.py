@@ -300,10 +300,10 @@ def ResLayer(name, bottom, num_blocks, dim, stride, layer_type=None):
         layers.extend(ResBlock(_get_name(i), layers[-1].top[0], dim, 1))
     return layers
 
-def Loss(name, bottoms):
+def Loss(name, bottoms,loss_type='EuclideanLoss'):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
-    layer.type = 'SoftmaxWithLoss'
+    layer.type = loss_type
     layer.bottom.extend(bottoms)
     layer.top.extend([name])
     return layer
@@ -336,6 +336,26 @@ configs = {
     152: [3, 8, 36, 3],
     200: [3, 24, 36, 3],
 }
+
+def v0_autoencoder_1(depth, batch, stops, height=600, width=800, loss='EuclideanLoss'):
+    model = caffe_pb2.NetParameter()
+    model.name = 'ResNet_{}'.format(depth)
+    num = configs[depth]
+    layers = []
+    data_channel = stops * 3
+    data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
+    gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
+    layers.append(Data_python('data', ['data'], param_str=data_param_str))
+    if phase=='train':
+        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+
+
 
 def v1_origin(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
@@ -659,8 +679,9 @@ def v1_multi_1(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phas
     gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
     
     layers.append(Data_python('data', ['data'], param_str=data_param_str))
-    slice_points = [3*i for i in range(stops-1)]
-    layers.extend(Slice('data_slice', 'data', slice_points=[3,6]))
+    slice_points = [3*(i+1) for i in range(stops-1)]
+    # print slice_points;exit()
+    layers.extend(Slice('data_slice', 'data', slice_points=slice_points))
     # for i in range(stops):
     #     layers.append(Data_python('data_%s'%str(i), ['data_%s'%str(i)], param_str=data_param_str))
 
@@ -732,8 +753,8 @@ def v1_multi_1_max(depth, batch, stops,height=600,width=800, loss='L1LossLayer',
     gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
     
     layers.append(Data_python('data', ['data'], param_str=data_param_str))
-    slice_points = [3*i for i in range(stops-1)]
-    layers.extend(Slice('data_slice', 'data', slice_points=[3,6]))
+    slice_points = [3*(i+1) for i in range(stops-1)]
+    layers.extend(Slice('data_slice', 'data', slice_points=slice_points))
     # for i in range(stops):
     #     layers.append(Data_python('data_%s'%str(i), ['data_%s'%str(i)], param_str=data_param_str))
 

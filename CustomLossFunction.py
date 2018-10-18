@@ -233,6 +233,49 @@ class sKLLossLayer(caffe.Layer):
                 sign = -1
             bottom[i].diff[...] = sign * loss_wgt * self.diff / bottom[i].num
 
+class iKLLossLayer(caffe.Layer):
+    """
+    Compute the KLD.
+    """
+    def setup(self, bottom, top):
+        # check input pair
+        if len(bottom) != 2:
+            raise Exception("Need two inputs (pred, gt) to compute divergence.")
+
+    def reshape(self, bottom, top):
+        # difference is shape of prediction
+        self.diff = np.zeros_like(bottom[0].data, dtype=np.float32)
+        # loss output  is scalar
+        top[0].reshape(1)
+
+    def forward(self, bottom, top):
+        # prediction
+        pred = bottom[0].data
+
+        # ground truth
+        gt = bottom[1].data
+
+        # compute log and difference of log values
+        epsilon = np.finfo(np.float).eps # epsilon (float or float 32)
+        gt_ln   = np.log(np.maximum(gt,epsilon))
+        pred_ln = np.log(np.maximum(pred,epsilon))
+        loss    = gt * (gt_ln - pred_ln)
+
+        # compute loss (averaged over image batch):
+        top[0].data[...] = np.mean(np.sum(loss,axis=1))
+
+        self.diff = pred * np.sum(gt, axis=1)[:,np.newaxis] - gt
+
+    def backward(self, top, propagate_down, bottom):    
+        loss_wgt = top[0].diff
+        for i in range(2):
+            if not propagate_down[i]:
+                continue
+            if i == 0:
+                sign = 1
+            else:
+                sign = -1
+            bottom[i].diff[...] = sign * loss_wgt * self.diff / bottom[i].num
 
 class BDistLayer(caffe.Layer):
     """A layer that computes Bhattacharyya distance using autograd"""
@@ -280,9 +323,6 @@ class BDistLayer(caffe.Layer):
         loss_wgt = top[0].diff
         print loss_wgt
         bottom[0].diff[...] = loss_wgt * self.diff / bottom[0].num
-
-
-
 
 class GBDLossLayer(caffe.Layer):
     """

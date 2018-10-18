@@ -4,6 +4,9 @@ import cv2
 import numpy as np
 import hdr_utils
 
+def random_crop(img):
+    pass
+
 class ImageDataset():
     def __init__(self, ds_name, debug=False, img_size=(800, 600)):
         if ds_name == 'salicon':

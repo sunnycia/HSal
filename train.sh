@@ -1,6 +1,6 @@
 #!/usr/bin/sh
 
-GPU=5
+GPU=7
 # DEBUG=1 # comment this line if not in debug mode
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=misc/VGG_ILSVRC_16_layers.caffemodel #BHA step 0.01 100epoch
@@ -15,7 +15,7 @@ WIDTH=224
 BATCH=16
 
 # LOSS=L1LossLayer
-LOSS=KLLossLayer
+LOSS=iKLLossLayer
 # LOSS=GBDLossLayer
 TRAIN_DS=salicon
 VAL_DS=hdreye_hdr

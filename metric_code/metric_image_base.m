@@ -77,7 +77,9 @@ for j = 1 : LengthFiles
     fprintf('Handling %s', smap_path);
 
     image_saliency = imread(smap_path);
-    image_saliency = rgb2gray(image_saliency);
+    if size(image_saliency,3)==3
+        image_saliency = rgb2gray(image_saliency);
+    end
     image_density = imread(density_path);
     image_fixation = imread(fixation_path);
     % other_map=zeros(1080, 1920);
