@@ -28,7 +28,7 @@ def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
         solver_instance.net.blobs['data'].data[...] = frame_minibatch
         # solver_instance.net.blobs['gt'].data[...] = density_minibatch
         solver_instance.net.forward()
-        loss = solver_instance.net.blobs['loss'].data[...].tolist()[0]
+        loss = solver_instance.net.blobs['loss'].data[...].tolist()#[0]
         prediction = solver_instance.net.blobs['predict'].data[...][0,0,:,:]
         loss_list.append(loss)
 

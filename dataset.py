@@ -50,6 +50,13 @@ class ImageDataset():
             self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
             self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
             self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/reinhard'
+        elif ds_name=='hdreye_exposion':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/exposion'
+            # self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/LDR-JPG'
+            # self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.fixation_basedir=None
+            self.density_basedir=None
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/exposion'
         else:
             raise NotImplementedError
 
@@ -58,8 +65,10 @@ class ImageDataset():
         MEAN_VALUE = np.array([103.939, 116.779, 123.68], dtype=np.float32)   # B G R/ use opensalicon's mean_value
         self.MEAN_VALUE = MEAN_VALUE[None, None, ...]
         self.img_size = img_size
+
         self.frame_path_list = glob.glob(os.path.join(self.frame_basedir, '*.*'))
-        self.density_path_list = glob.glob(os.path.join(self.density_basedir, '*.*'))
+        if self.density_basedir:
+            self.density_path_list = glob.glob(os.path.join(self.density_basedir, '*.*'))
         if debug is True:
             print "Warning: this session is in debug mode"
             length = len(self.frame_path_list)
@@ -85,6 +94,25 @@ class ImageDataset():
             image = image / 255.
         return image
 
+
+    def get_data_batch_path(self, batch_size):
+        start = self.index_in_epoch
+        self.index_in_epoch += batch_size
+        if self.index_in_epoch > self.num_examples:
+            # Finished epoch
+            self.completed_epoch += 1
+            print "INFO:%s epoch(es) finished." % str(self.completed_epoch)
+            # Shuffle the data
+            np.random.shuffle(self.frame_path_list)
+            
+            # Start next epoch
+            start = 0
+            self.index_in_epoch = batch_size
+            assert batch_size <= self.num_examples
+        end = self.index_in_epoch
+        return self.frame_path_list[start:end]
+
+
     def get_batch_path(self, batch_size):
         start = self.index_in_epoch
         self.index_in_epoch += batch_size
@@ -103,6 +131,23 @@ class ImageDataset():
             assert batch_size <= self.num_examples
         end = self.index_in_epoch
         return self.frame_path_list[start:end], self.density_path_list[start:end]
+
+
+    def next_data_batch(self, batch_size, stops):
+        """Return the next `batch_size` examples from this data set."""
+        if stops>1:
+            return self.next_hdr_batch(batch_size, stops)
+        else:
+            self.batch_frame_path_list = self.get_data_batch_path(batch_size)
+
+            batch_frame_list =[]
+            for frame_path in self.batch_frame_path_list:
+                frame = cv2.imread(frame_path).astype(np.float32)
+
+                frame =self.pre_process_img(frame, False)
+                batch_frame_list.append(frame)
+            return np.array(batch_frame_list)
+
 
     def next_batch(self, batch_size, stops):
         """Return the next `batch_size` examples from this data set."""
@@ -159,3 +204,36 @@ class ImageDataset():
             batch_density_list.append(density)
         
         return np.array(batch_frame_list), np.array(batch_density_list)
+
+    def random_crop(self):
+        # Generate
+        for i in range(length):
+            x_locations = np.random.randint(0, canvas_width - patch_width, size=10)
+            y_locations = np.random.randint(0, canvas_height - patch_height, size=10)
+            img1 = Image.open(img1_input[i].strip())
+            img2 = Image.open(img2_input[i].strip())
+            if flow_input[i].strip().find('.png') != -1:
+                flow = kittitool.flow_read(flow_input[i].strip())
+            else:
+                flow = fl.read_flow(flow_input[i].strip())
+            for (x, y) in zip(x_locations, y_locations):
+                patch_img1 = img1.crop((x, y, x+patch_width, y+patch_height))
+                patch_img2 = img2.crop((x, y, x+patch_width, y+patch_height))
+                patch_flow = flow[y:y+patch_height, x:x+patch_width]
+                filename = str.format('%05d_' % i) + str(x) + '_' + str(y)
+                path1 = os.path.join(output_dir, filename + '_img1.png')
+                path2 = os.path.join(output_dir, filename + '_img2.png')
+                flow_path = os.path.join(output_dir, filename + '.flo')
+                patch_img1.save(path1)
+                patch_img2.save(path2)
+                fl.write_flow(patch_flow, flow_path)
+                g1.write(path1 + '\n')
+                g2.write(path2 + '\n')
+                g.write(flow_path + '\n')
+    def prepare_ae(self):
+        ### prepare dataset for autoencoder
+        # crop images, create little batch dataset
+        pass
+
+    def next_ae_batch(self, batch_size):
+        pass

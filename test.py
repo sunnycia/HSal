@@ -13,6 +13,9 @@ caffe.set_mode_gpu()
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_dir', type=str, help='pretrained model.')
+    # parser.add_argument('--model_path', type=str, required=True)
+    # parser.add_argument('--net_path', type=str, required=True)
+    # parser
     parser.add_argument('--dsname', type=str, default='hdreye_hdr', help='training dataset')
 
     parser.add_argument('--stops', type=int, help='training sdr stops')
@@ -59,7 +62,7 @@ for model_path in model_path_list:
     network = caffe.Net(net_path, model_path, caffe.TRAIN) # use training network
 
     while ds.completed_epoch==0:
-        frame_minibatch, _ = ds.next_hdr_batch(1, stops=args.stops)
+        frame_minibatch = ds.next_data_batch(1, stops=args.stops)
         network.blobs['data'].data[...] = frame_minibatch
         network.forward()
         prediction = network.blobs['predict'].data[0, 0, :, :]

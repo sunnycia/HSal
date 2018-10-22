@@ -1,25 +1,35 @@
 #!/usr/bin/sh
 
-GPU=7
-# DEBUG=1 # comment this line if not in debug mode
+
+### uncomment following two lines if you need custom caffe directory
+# CAFFE_ROOT=/data/sunnycia/hdr_works/source_code/hdr_saliency/mycaffe
+# export PYTHONPATH=$CAFFE_ROOT/python:$PYTHONPATH
+
+### comment this line if not in debug mode
+# DEBUG=1 
+
+GPU=6
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=misc/VGG_ILSVRC_16_layers.caffemodel #BHA step 0.01 100epoch
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
-MODEL=v1_multi_1
-# MODEL=v2_multi_lateconcat_vgg16
-STOPS=3
-
+# MODEL=v1_multi_1_max
+# MODEL=v2_multi_earlyconcat_vgg16
+MODEL=v1_single_mscale_resnet50
+STOPS=1
 
 HEIGHT=224
 WIDTH=224
-BATCH=16
+BATCH=1
 
 # LOSS=L1LossLayer
-LOSS=iKLLossLayer
+# LOSS=KLLossLayer
+LOSS=KLDivLoss
+# LOSS=L1Loss
 # LOSS=GBDLossLayer
 TRAIN_DS=salicon
-VAL_DS=hdreye_hdr
-# VAL_DS=salicon_val_small
+# TRAIN_DS=salicon_val
+# VAL_DS=hdreye_hdr
+VAL_DS=salicon_val
 
 # Training setting variable
 BASE_LR=0.0001
@@ -31,7 +41,6 @@ VAL_ITER=2500
 # VAL_EPOCH=20
 PLT_ITER=500
 EPOCH=100
-
 
 TS=`date "+%Y%m%d%T"`
 MODEL_DIR=$MODEL

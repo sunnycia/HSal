@@ -44,15 +44,17 @@ args = get_arguments()
 
 ##
 print "Loading data..."
-tranining_dataset = ImageDataset(ds_name=args.training_ds,img_size=(args.width, args.height), debug=args.debug)
+training_dataset = ImageDataset(ds_name=args.training_ds,img_size=(args.width, args.height), debug=args.debug)
 validation_dataset = ImageDataset(ds_name=args.validation_ds,img_size=(args.width, args.height), debug=args.debug)
 
 if args.debug:
-    max_epoch=100
+    # max_epoch=100
+    max_epoch=args.max_epoch
     # validation_epoch=2
     validation_iter=50
     plot_iter=25
     validation_dataset = ImageDataset(ds_name=args.training_ds,img_size=(args.width, args.height), debug=args.debug)
+    # validation_dataset=training_dataset
 else:
     max_epoch = args.max_epoch
     # validation_epoch = args.val_epoch
@@ -108,9 +110,9 @@ else:
 
 
 plt.plot(x, y)
-while tranining_dataset.completed_epoch < max_epoch:
-    # epoch = tranining_dataset.completed_epoch
-    # if not tranining_dataset.completed_epoch in complete_val_epoch_list:
+while training_dataset.completed_epoch < max_epoch:
+    # epoch = training_dataset.completed_epoch
+    # if not training_dataset.completed_epoch in complete_val_epoch_list:
     if _step % validation_iter==0:
         print "INFO: step %s, doing validation" % str(_step)
         # do validation for validation set, and plot average 
@@ -123,11 +125,13 @@ while tranining_dataset.completed_epoch < max_epoch:
         validation_dataset.completed_epoch=0
 
         # pass
-    frame_minibatch, density_minibatch = tranining_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops)
+    frame_minibatch, density_minibatch = training_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops)
 
     solver.net.blobs['data'].data[...] = frame_minibatch
     solver.net.blobs['gt'].data[...] = density_minibatch
     solver.step(1)
+    prediction = solver.net.blobs['predict'].data[...]
+    print prediction.max(),prediction.mean(), prediction.min()
 
     x.append(_step)
     y.append(solver.net.blobs['loss'].data[...].tolist())
