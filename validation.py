@@ -34,7 +34,7 @@ def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
 
 
         prediction = prediction-np.min(prediction)
-        print np.max(prediction)
+        # print np.max(prediction)
         prediction = prediction/(np.max(prediction)+1e-8)
         prediction = prediction * 255
         # print prediction[0]

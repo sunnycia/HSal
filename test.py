@@ -50,6 +50,9 @@ model_path_list.sort(key=os.path.getctime)
 print os.path.join(args.model_dir, model_name+'.prototxt')
 net_path = glob.glob(os.path.join(args.model_dir, model_name+'.prototxt'))[0]
 
+
+sal_net = SaliencyNet(net_path, model_path)
+
 for model_path in model_path_list:
     iter_num = os.path.basename(model_path).split('.')[0].split('_')[-1]
     ds = ImageDataset(ds_name=args.dsname,img_size=(args.width, args.height))
@@ -59,15 +62,16 @@ for model_path in model_path_list:
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
-    network = caffe.Net(net_path, model_path, caffe.TRAIN) # use training network
+    # network = caffe.Net(net_path, model_path, caffe.TRAIN) # use training network
 
     while ds.completed_epoch==0:
         frame_minibatch = ds.next_data_batch(1, stops=args.stops)
-        network.blobs['data'].data[...] = frame_minibatch
-        network.forward()
-        prediction = network.blobs['predict'].data[0, 0, :, :]
+        sal_map = sal_net.get_saliencymap(frame_minibatch)
+        # network.blobs['data'].data[...] = frame_minibatch
+        # network.forward()
+        # prediction = network.blobs['predict'].data[0, 0, :, :]
 
-        sal_map = postprocess_saliency_map(prediction)
+        # sal_map = postprocess_saliency_map(prediction)
 
         # print sal_map[0,0]
         img_name = os.path.basename(ds.batch_frame_path_list[0]).split('.')[0]

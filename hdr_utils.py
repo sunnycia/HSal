@@ -109,8 +109,100 @@ def apply_crf(img, lin_type='gamma', lin_fun=2.2):
         return img_out
     pass
 
+def check13_color(img):
+    channel = img.shape
+    # print img.shape
+    if len(img.shape)==2 or(len(img.shape)==3 and img.shape[-1]==3):
+        pass
+    else:
+        raise ValueError('The image has to be an RGB or luminance image.')
+
+def max_quart(matrix, percentile):
+    total = np.size(matrix)
+    # print 'total:',total
+    matrix = matrix.flatten()
+    matrix.sort()
+    percentile_index = int(math.floor(total*percentile))
+    # print percentile_index
+    return matrix[percentile_index]
+
+def histogram_HDR(img, n_zone=256, type_log='log10', b_normalized=0, b_plot=0):
+    check13_color(img)
+    L = lum(img);
+    L = L.flatten()
+
+    L2 = np.copy(L)
+
+    delta=1e-6
+    if type_log=='log2':
+        L=np.log2(L+delta)
+    if type_log=='loge':
+        L=np.log(L+delta)
+    if type_log=='log10':
+        L=np.log10(L+delta)
+
+    L_min = L.min()
+    L_max = L.max()
+
+    dMM = (L_max-L_min)/(n_zone-1)
+
+    histo = np.zeros((n_zone,1))
+    bound = (L_min, L_max)
+
+    haverage = 0
+    total = 0
+    for i in range(1, n_zone):
+        indx = np.where(np.logical_and(L>(dMM*(i-1)+L_min), L<(dMM*i+L_min)))
+        count = np.size(indx)
+        # print count
+        if count > 0:
+            histo[i] = count
+            # print L2[indx], np.size(indx)
+            haverage =haverage+max_quart(L2[indx],0.5)*count
+            total    = total+count;
+
+    if (b_normalized):
+        norm = sum(histo)
+        if (norm>0):
+            histo = histo/norm
+
+    haverage = haverage / (total)
+
+    return histo, bound, haverage
+
+def exposure_histogram_sampling(img, n_bit=8, eh_overlap=2.0):
+    if n_bit<1:
+        n_bit=8
+    n_bin=np.power(2,n_bit)
+    n_bit_half=round(n_bit/2.0)
+
+    fstops=[]
+    histo,bound,_ = histogram_HDR(img, n_bin, 'log2', 0,0)
+    dMM = (bound[1] - bound[0])/n_bin
+
+    if eh_overlap > n_bit_half:
+        eh_overlap=0.0
+
+    removing_bins=round((n_bit_half - eh_overlap)/dMM)
+
+    while(sum(histo) > 1):
+        print sum(histo), histo.flatten()
+        total = -1
+        index = -1
+        for i in range(int(removing_bins), int(n_bin) - int(removing_bins)+1):
+            t_sum = sum(histo[i - int(removing_bins):i+int(removing_bins)-1])
+
+            if t_sum > total:
+                index=i
+                total = t_sum
+        if index > 0:
+            histo[index - int(removing_bins):index + int(removing_bins)] = 0
+            value = -(index * dMM+bound[0]) - 1.0
+            fstops.append(value)
+
+    return fstops
 def create_ldrstack_from_hdr(img, fstops_distance=1, 
-                          sampling_mode='uniform', 
+                          sampling_mode='histogram', 
                           lin_type='gamma', 
                           lin_fun=2.2):
     '''a python reinplementation of CreateLDRStackFromHDR in HDR_toolbox'''
@@ -118,7 +210,8 @@ def create_ldrstack_from_hdr(img, fstops_distance=1,
     L = lum(img)
 
     if sampling_mode=='histogram':
-        raise NotImplementedError
+        # raise NotImplementedError
+        stack_exposure=np.power(2, exposure_histogram_sampling(img))
     elif sampling_mode=='uniform':
 
         minL=min(L[np.where(L>0)])

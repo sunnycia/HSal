@@ -147,7 +147,6 @@ def Eltwise(name, bottom_list, operation=2):
 
     return [eltwise_layer]
 
-
 def Concat(name, bottom_list):
     concat_layer = caffe_pb2.LayerParameter()
     concat_layer.type = 'Concat'
@@ -198,11 +197,6 @@ def Bn_Sc(name, bottom, keep_name=False):
     scale_layer.scale_param.bias_filler.value = 0
     return [bn_layer, scale_layer]
 
-# def Concat(name, bottom):
-#     top_name = name
-
-
-
 def Act(name, bottom, act_type='ReLU'):
     top_name = name
     # ReLU
@@ -212,7 +206,6 @@ def Act(name, bottom, act_type='ReLU'):
     relu_layer.bottom.extend([top_name])
     relu_layer.top.extend([top_name])
     return [relu_layer]
-
 
 def Pool(name, bottom, pooling_method, kernel_size, stride, pad):
     layer = caffe_pb2.LayerParameter()
@@ -231,7 +224,6 @@ def Pool(name, bottom, pooling_method, kernel_size, stride, pad):
     layer.pooling_param.pad = pad
     return layer
 
-
 def Linear(name, bottom, num_output):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
@@ -244,7 +236,6 @@ def Linear(name, bottom, num_output):
     layer.param.extend(_get_param(2))
     return layer
 
-
 def Add(name, bottoms):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
@@ -252,7 +243,6 @@ def Add(name, bottoms):
     layer.bottom.extend(bottoms)
     layer.top.extend([name])
     return layer
-
 
 def ResBlock(name, bottom, dim, stride, block_type=None):
     layers = []
@@ -302,28 +292,43 @@ def ResLayer(name, bottom, num_blocks, dim, stride, layer_type=None):
     return layers
 
 def LossLayer(name, bottoms, loss_type):
-    if loss_type in cpp_loss_list:
-        return Loss(name, bottoms, loss_type=loss_type)
-    elif loss_type in python_loss_list:
-        return Loss_python(name, bottoms, loss=loss_type)
+    loss_list = []
+    weight_list=[]
+    if '+' in loss_type:
+        loss_list=loss_type.split('-')[0].split('+')
+        weight_list = loss_type.split('-')[1].split('+')
+        weight_list=[int(i) for i in weight_list]
     else:
-        raise NotImplementedError
+        loss_list.append(loss_type)
+        weight_list.append(1)
+    layer_list=[]
+    for loss,weight in zip(loss_list,weight_list):
+        if loss in cpp_loss_list:
+            layer_list.append(Loss(name, bottoms, loss_type=loss, weight=weight))
+        elif loss in python_loss_list:
+            layer_list.append(Loss_python(name, bottoms, loss=loss, weight=weight))
+        else:
+            raise NotImplementedError
+        name=name+'_'
+    return layer_list
 
-def Loss(name, bottoms,loss_type='EuclideanLoss'):
+
+def Loss(name, bottoms,loss_type='EuclideanLoss', weight=1):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
     layer.type = loss_type
     layer.bottom.extend(bottoms)
+    layer.loss_weight.extend([weight])
     layer.top.extend([name])
     return layer
 
-def Loss_python(name, bottoms, module="CustomLossFunction", loss="L1LossLayer"):
+def Loss_python(name, bottoms, module="CustomLossFunction", loss="L1LossLayer",weight=1):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
     layer.type = 'Python'
     layer.bottom.extend(bottoms)
     layer.top.extend([name])
-    layer.loss_weight.extend([1])
+    layer.loss_weight.extend([weight])
     layer.python_param.module=module
     layer.python_param.layer=loss
     return layer
@@ -337,7 +342,6 @@ def Accuracy(name, bottoms, top_k):
     layer.accuracy_param.top_k = top_k
     layer.include.extend([_get_include('test')])
     return layer
-
 
 configs = {
     50: [3, 4, 6, 3],
@@ -1041,7 +1045,6 @@ def v1_single_resnet50(depth, batch, stops,height=600,width=800, loss='L1LossLay
     model.layer.extend(layers)
     return model
 
-
 def v1_single_mscale_resnet50(depth, batch, stops=1,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
     model.name = 'ResNet_{}'.format(depth)
@@ -1106,7 +1109,7 @@ def v1_single_mscale_resnet50(depth, batch, stops=1,height=600,width=800, loss='
 
     if phase=='train':
         # layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
-        layers.append(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
+        layers.extend(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
     elif phase=='deploy':
         pass
     else:
@@ -1114,8 +1117,6 @@ def v1_single_mscale_resnet50(depth, batch, stops=1,height=600,width=800, loss='
 
     model.layer.extend(layers)
     return model
-
-
 
 def v2_single_vgg16(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
@@ -1406,18 +1407,20 @@ def v3_multi_fusion_network(depth, batch, stops,height=600,width=800, loss='L1Lo
     else:
         raise NotImplementedError
 
-    layers.append(Conv('conv1' 'data', 16, 3, 1, 1,lr_mult=1,have_bias=True))
-    layers.extend(Bn_Sc('conv1', layers[-1].top[0]))
-    layers.extend(Act('conv1' layers[-1].top[0]))
-    layers.append(Conv('conv2' layers[-1].top[0], 16, 3, 1, 1,lr_mult=1,have_bias=True))
-    layers.extend(Bn_Sc('conv2', layers[-1].top[0]))
-    layers.extend(Act('conv2' layers[-1].top[0]))
-    layers.append(Conv('predict' layers[-1].top[0], 1, 3, 1, 1,lr_mult=1,have_bias=True))
+    layers.append(Conv('conv1',  'data', 16, 3, 1, 1, lr_mult=1, have_bias=True))
+    layers.extend(Bn_Sc('conv1', 'conv1'))
+    layers.extend(Act('conv1',  'conv1'))
+
+    layers.append(Conv('conv2', layers[-1].top[0], 16, 3, 1, 1,lr_mult=1, have_bias=True))
+    layers.extend(Bn_Sc('conv2', 'conv2'))
+    layers.extend(Act('conv2', 'conv2'))
+
+    layers.append(Conv('predict', layers[-1].top[0], 1, 3, 1, 1,lr_mult=1, have_bias=True))
     layers.extend(Bn_Sc('predict', layers[-1].top[0]))
-    layers.extend(Act('predict' layers[-1].top[0]))
+    layers.extend(Act('predict', layers[-1].top[0]))
 
     if phase=='train':
-        layers.append(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
+        layers.extend(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
     elif phase=='deploy':
         pass
     else:

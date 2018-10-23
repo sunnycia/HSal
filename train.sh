@@ -8,7 +8,15 @@
 ### comment this line if not in debug mode
 # DEBUG=1 
 
-GPU=6
+### choose a solver, SGD default
+# SOLVER_TYPE=SGDSolver
+# SOLVER_TYPE=NesterovSolver
+# SOLVER_TYPE=AdaGradSolver
+# SOLVER_TYPE=RMSPropSolver
+SOLVER_TYPE=AdaDeltaSolver
+# SOLVER_TYPE=AdamSolver
+
+GPU=7
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=misc/VGG_ILSVRC_16_layers.caffemodel #BHA step 0.01 100epoch
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
@@ -19,12 +27,16 @@ STOPS=1
 
 HEIGHT=224
 WIDTH=224
-BATCH=1
+BATCH=2
+
+# LOSS=L1Loss
+# LOSS=L1Loss+KLLossLayer-1+1000
+# LOSS=EuclideanLoss
+LOSS=EuclideanLoss+KLLossLayer-1+1000
 
 # LOSS=L1LossLayer
 # LOSS=KLLossLayer
-LOSS=KLDivLoss
-# LOSS=L1Loss
+# LOSS=KLDivLoss
 # LOSS=GBDLossLayer
 TRAIN_DS=salicon
 # TRAIN_DS=salicon_val
@@ -34,7 +46,7 @@ VAL_DS=salicon_val
 # Training setting variable
 BASE_LR=0.0001
 # BASE_LR=0.0000001
-LR_POLICY='step'
+LR_POLICY='inv'
 
 # VAL_ITER=12500
 VAL_ITER=2500
@@ -68,11 +80,11 @@ if [ -z "$SNAPSHOT_DIR"];
     eval $CMD
     rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
     
-    CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL "
+    CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --solver_type=$SOLVER_TYPE "
      if [ -n "$DEBUG" ]; then CMD="$CMD"--debug; fi
     eval $CMD
 else
-    CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --snapshot_dir=$SNAPSHOT_DIR "
+    CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --snapshot_dir=$SNAPSHOT_DIR --solver_type=$SOLVER_TYPE "
     if [ -n "$DEBUG" ];then CMD="$CMD"--debug; fi # restore snapshot state
     eval $CMD
 fi

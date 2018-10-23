@@ -3,10 +3,10 @@ base_lr: 9.99999974738e-05
 display: 50
 max_iter: 1000000
 lr_policy: "inv"
-gamma: 0.0
-power: 0.0
+gamma: 0.000500000023749
+power: 0.75
 momentum: 0.899999976158
 weight_decay: 9.99999974738e-05
 snapshot: 10000
-snapshot_prefix: "snapshot/v1_single_mscale_resnet50/2018102215:11:55/snapshot_"
+snapshot_prefix: "snapshot/v1_single_mscale_resnet50/2018102310:15:35/snapshot_"
 solver_mode: GPU

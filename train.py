@@ -8,6 +8,7 @@ import numpy as np
 import caffe
 from validation import validation
 from generate_net import parse_weight
+from caffe import SGDSolver, NesterovSolver, AdaGradSolver, RMSPropSolver, AdaDeltaSolver, AdamSolver
 
 caffe.set_mode_gpu()
 
@@ -22,6 +23,8 @@ def get_arguments():
     parser.add_argument('--validation_ds', type=str, default='salicon', help='training dataset')
     parser.add_argument('--debug', action='store_true', default=False, help='If debug is ture, a mini set will run into training.Or a complete set will.')
     # parser.add_argument('--visualization', type=bool, default=False, help='visualization training loss option')
+
+    parser.add_argument('--solver_type', type=str, default='SGDSolver',  help='model save path')
 
     parser.add_argument('--snapshot', type=str, help='model save path')
     parser.add_argument('--batch', type=int, help='training mini batch')
@@ -64,7 +67,9 @@ else:
 # load the solver
 solver_path = args.solver
 network_path = args.network
-solver = caffe.SGDSolver(solver_path)
+
+# solver = SGDSolver(solver_path)
+solver = eval(args.solver_type)(solver_path)
 
 if args.snapshot_dir:
     pass
@@ -130,8 +135,8 @@ while training_dataset.completed_epoch < max_epoch:
     solver.net.blobs['data'].data[...] = frame_minibatch
     solver.net.blobs['gt'].data[...] = density_minibatch
     solver.step(1)
-    prediction = solver.net.blobs['predict'].data[...]
-    print prediction.max(),prediction.mean(), prediction.min()
+    # prediction = solver.net.blobs['predict'].data[...]
+    # print prediction.max(),prediction.mean(), prediction.min()
 
     x.append(_step)
     y.append(solver.net.blobs['loss'].data[...].tolist())
