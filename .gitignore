@@ -9,3 +9,4 @@ tmp_*
 *.caffemodel
 *.solverstate
 *.npy
+history

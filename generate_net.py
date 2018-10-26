@@ -57,7 +57,6 @@ def _get_transform_param(phase):
         raise ValueError("Unknown phase {}".format(phase))
     return param
 
-
 def Data(name, tops, source, batch_size, phase):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
@@ -82,7 +81,7 @@ def Data_python(name, tops, param_str='2,3,600,800', bottom=None, module="Custom
     layer.python_param.param_str = param_str
     return layer
 
-def Conv(name, bottom, num_output, kernel_size, stride, pad, lr_mult=1, have_bias=False):
+def Conv(name, bottom, num_output, kernel_size, stride, pad, lr_mult=1, weight_filler='msra', have_bias=False):
     layer = caffe_pb2.LayerParameter()
     layer.name = name
     layer.type = 'Convolution'
@@ -92,10 +91,20 @@ def Conv(name, bottom, num_output, kernel_size, stride, pad, lr_mult=1, have_bia
     layer.convolution_param.kernel_size.extend([kernel_size])
     layer.convolution_param.stride.extend([stride])
     layer.convolution_param.pad.extend([pad])
-    layer.convolution_param.weight_filler.type = 'msra'
+    layer.convolution_param.weight_filler.type = weight_filler
     layer.convolution_param.bias_term = have_bias
     layer.param.extend(_get_param(1, lr_mult))
     return layer
+
+def Dropout(name,bottom,dropout_ratio):
+    dropout_layer = caffe_pb2.LayerParameter()
+    dropout_layer.type = 'Dropout'
+    dropout_layer.bottom.extend([bottom])
+    dropout_layer.top.extend([name])
+    dropout_layer.name = name
+    dropout_layer.dropout_param.dropout_ratio=dropout_ratio
+
+    return dropout_layer
 
 def Conv_multi_bottom(name, bottom, num_output, kernel_size, stride, pad):
     # bottom and top are list
@@ -1106,6 +1115,216 @@ def v1_single_mscale_resnet50(depth, batch, stops=1,height=600,width=800, loss='
     # layers.extend(Bn_Sc('deconv4', layers[-1].top[0]))
     # layers.extend(Act('deconv4', layers[-1].top[0]))
     layers.append(Bilinear_upsample('predict', 'deconv3', 1, 2, lr_mult=1))
+
+    if phase=='train':
+        # layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
+        layers.extend(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    model.layer.extend(layers)
+    return model
+
+def v1_single_mscale_dp_resnet50(depth, batch, stops=1,height=600,width=800, loss='L1LossLayer',phase='train'):
+    model = caffe_pb2.NetParameter()
+    model.name = 'ResNet_{}'.format(depth)
+    num = configs[depth]
+    layers = []
+    data_channel=stops*3
+    data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
+    gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
+    layers.append(Data_python('data', ['data'], param_str=data_param_str))
+    layers.append(Pool('data_lowres', 'data', 'max', 2, 2, 0))
+
+
+    if phase=='train':
+        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+
+    # bottom_list[1] save the low resolution featu
+    bottom_list = []
+    for i in range(2):
+        idx=i+1
+        # conv1
+        if i ==0:
+            layers.append(Conv('%s_conv1' % str(idx), 'data', 64, 7, 2, 3, have_bias=True))
+        else:
+            layers.append(Conv('%s_conv1' % str(idx), 'data_lowres', 64, 7, 2, 3, have_bias=True))            
+        layers.extend(Bn_Sc('%s_conv1' % str(idx), layers[-1].top[0]))
+        layers.extend(Act('%s_conv1' % str(idx), layers[-1].top[0]))
+
+        # resnet block
+        layers.extend(ResLayer('%s_res2' % str(idx), layers[-1].top[0], num[0], 64, 1, 'first'))
+        layers.extend(ResLayer('%s_res3' % str(idx), layers[-1].top[0], num[1], 128, 2))
+        layers.extend(ResLayer('%s_res4' % str(idx), layers[-1].top[0], num[2], 256, 2))
+        layers.extend(ResLayer('%s_res5' % str(idx), layers[-1].top[0], num[3], 512, 2))
+        layers.extend(Bn_Sc('%s_conv5' % str(idx), layers[-1].top[0]))
+        bottom_list.append('%s_conv5' % str(idx))
+
+    ## feature upsampling
+    layers.append(Bilinear_upsample(bottom_list[1]+'_upsample', bottom_list[1], 2048, 2, lr_mult=0, weight_filler='bilinear'))
+    bottom_list[1] = bottom_list[1]+'_upsample'
+
+    ## feature concatenation
+    layers.extend(Concat('feat_concat', bottom_list))
+
+    layers.append(Bilinear_upsample('deconv1', 'feat_concat', 256, 2, lr_mult=1))
+    layers.append(Dropout('deconv1', 'deconv1', dropout_ratio=0.5))
+    layers.extend(Act('deconv1', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('deconv2', 'deconv1', 128, 2, lr_mult=1))
+    layers.append(Dropout('deconv2', 'deconv2', dropout_ratio=0.5))
+    layers.extend(Act('deconv2', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('deconv3', 'deconv2', 64, 2, lr_mult=1))
+    layers.append(Dropout('deconv3', 'deconv3', dropout_ratio=0.5))
+    layers.extend(Act('deconv3', layers[-1].top[0]))
+    # layers.append(Bilinear_upsample('deconv4', 'deconv3', 3, 2, lr_mult=1))
+    # layers.extend(Bn_Sc('deconv4', layers[-1].top[0]))
+    # layers.extend(Act('deconv4', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('predict', 'deconv3', 1, 2, lr_mult=1))
+
+    if phase=='train':
+        # layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
+        layers.extend(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    model.layer.extend(layers)
+    return model
+
+def v1_single_mscale_onedeconv_resnet50(depth, batch, stops=1,height=600,width=800, loss='L1LossLayer',phase='train'):
+    model = caffe_pb2.NetParameter()
+    model.name = 'ResNet_{}'.format(depth)
+    num = configs[depth]
+    layers = []
+    data_channel=stops*3
+    data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
+    gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
+    layers.append(Data_python('data', ['data'], param_str=data_param_str))
+    layers.append(Pool('data_lowres', 'data', 'max', 2, 2, 0))
+
+
+    if phase=='train':
+        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+
+    # bottom_list[1] save the low resolution featu
+    bottom_list = []
+    for i in range(2):
+        idx=i+1
+        # conv1
+        if i ==0:
+            layers.append(Conv('%s_conv1' % str(idx), 'data', 64, 7, 2, 3, have_bias=True))
+        else:
+            layers.append(Conv('%s_conv1' % str(idx), 'data_lowres', 64, 7, 2, 3, have_bias=True))            
+        layers.extend(Bn_Sc('%s_conv1' % str(idx), layers[-1].top[0]))
+        layers.extend(Act('%s_conv1' % str(idx), layers[-1].top[0]))
+
+        # resnet block
+        layers.extend(ResLayer('%s_res2' % str(idx), layers[-1].top[0], num[0], 64, 1, 'first'))
+        layers.extend(ResLayer('%s_res3' % str(idx), layers[-1].top[0], num[1], 128, 2))
+        layers.extend(ResLayer('%s_res4' % str(idx), layers[-1].top[0], num[2], 256, 2))
+        layers.extend(ResLayer('%s_res5' % str(idx), layers[-1].top[0], num[3], 512, 2))
+        layers.extend(Bn_Sc('%s_conv5' % str(idx), layers[-1].top[0]))
+        bottom_list.append('%s_conv5' % str(idx))
+
+    ## feature upsampling
+    layers.append(Bilinear_upsample(bottom_list[1]+'_upsample', bottom_list[1], 2048, 2, lr_mult=0, weight_filler='bilinear'))
+    bottom_list[1] = bottom_list[1]+'_upsample'
+
+    ## feature concatenation
+    layers.extend(Concat('feat_concat', bottom_list))
+
+    layers.append(Bilinear_upsample('predict', 'feat_concat', 1, 16, lr_mult=1))
+
+    if phase=='train':
+        # layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
+        layers.extend(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    model.layer.extend(layers)
+    return model
+
+def v1_single_mscale_rectified_resnet50(depth, batch, stops=1,height=600,width=800, loss='L1LossLayer',phase='train'):
+    model = caffe_pb2.NetParameter()
+    model.name = 'ResNet_{}'.format(depth)
+    num = configs[depth]
+    layers = []
+    data_channel=stops*3
+    data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
+    gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
+    layers.append(Data_python('data', ['data'], param_str=data_param_str))
+    layers.append(Pool('data_lowres', 'data', 'max', 2, 2, 0))
+
+
+    if phase=='train':
+        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    # bottom_list[1] save the low resolution featu
+    bottom_list = []
+    for i in range(2):
+        idx=i+1
+        # conv1
+        if i ==0:
+            layers.append(Conv('%s_conv1' % str(idx), 'data', 64, 7, 2, 3, have_bias=True))
+        else:
+            layers.append(Conv('%s_conv1' % str(idx), 'data_lowres', 64, 7, 2, 3, have_bias=True))            
+        layers.extend(Bn_Sc('%s_conv1' % str(idx), layers[-1].top[0]))
+        layers.extend(Act('%s_conv1' % str(idx), layers[-1].top[0]))
+
+        # resnet block
+        layers.extend(ResLayer('%s_res2' % str(idx), layers[-1].top[0], num[0], 64, 1, 'first'))
+        layers.extend(ResLayer('%s_res3' % str(idx), layers[-1].top[0], num[1], 128, 2))
+        layers.extend(ResLayer('%s_res4' % str(idx), layers[-1].top[0], num[2], 256, 2))
+        layers.extend(ResLayer('%s_res5' % str(idx), layers[-1].top[0], num[3], 512, 2))
+        layers.extend(Bn_Sc('%s_conv5' % str(idx), layers[-1].top[0]))
+        bottom_list.append('%s_conv5' % str(idx))
+
+    ## feature upsampling
+    layers.append(Bilinear_upsample(bottom_list[1]+'_upsample', bottom_list[1], 2048, 2, lr_mult=0, weight_filler='bilinear'))
+    bottom_list[1] = bottom_list[1]+'_upsample'
+
+    ## feature concatenation
+    layers.extend(Concat('feat_concat', bottom_list))
+
+    layers.append(Bilinear_upsample('deconv1', 'feat_concat', 256, 2, lr_mult=1))
+    layers.extend(Bn_Sc('deconv1', layers[-1].top[0]))
+    layers.extend(Act('deconv1', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('deconv2', 'deconv1', 128, 2, lr_mult=1))
+    layers.extend(Bn_Sc('deconv2', layers[-1].top[0]))
+    layers.extend(Act('deconv2', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('deconv3', 'deconv2', 64, 2, lr_mult=1))
+    layers.extend(Bn_Sc('deconv3', layers[-1].top[0]))
+    layers.extend(Act('deconv3', layers[-1].top[0]))
+    # layers.append(Bilinear_upsample('deconv4', 'deconv3', 3, 2, lr_mult=1))
+    # layers.extend(Bn_Sc('deconv4', layers[-1].top[0]))
+    # layers.extend(Act('deconv4', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('deconv4', 'deconv3', 1, 2, lr_mult=1))
+    layers.extend(Bn_Sc('deconv4', layers[-1].top[0]))
+    layers.extend(Act('deconv4', layers[-1].top[0]))
+
+    layers.append(Conv('predict', 'deconv4',1, 1, 1, 0, lr_mult=1,weight_filler='gaussian'))    
 
     if phase=='train':
         # layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))

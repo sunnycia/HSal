@@ -5,24 +5,26 @@
 # CAFFE_ROOT=/data/sunnycia/hdr_works/source_code/hdr_saliency/mycaffe
 # export PYTHONPATH=$CAFFE_ROOT/python:$PYTHONPATH
 
+GPU=7
 ### comment this line if not in debug mode
 # DEBUG=1 
 
 ### choose a solver, SGD default
-# SOLVER_TYPE=SGDSolver
+SOLVER_TYPE=SGDSolver
 # SOLVER_TYPE=NesterovSolver
 # SOLVER_TYPE=AdaGradSolver
 # SOLVER_TYPE=RMSPropSolver
-SOLVER_TYPE=AdaDeltaSolver
+# SOLVER_TYPE=AdaDeltaSolver
 # SOLVER_TYPE=AdamSolver
 
-GPU=7
 PRE_MODEL=misc/ResNet-50-model.caffemodel
 # PRE_MODEL=misc/VGG_ILSVRC_16_layers.caffemodel #BHA step 0.01 100epoch
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
 # MODEL=v1_multi_1_max
 # MODEL=v2_multi_earlyconcat_vgg16
 MODEL=v1_single_mscale_resnet50
+# MODEL=v1_single_mscale_rectified_resnet50
+# MODEL=v1_single_mscale_onedeconv_resnet50
 STOPS=1
 
 HEIGHT=224
@@ -30,9 +32,9 @@ WIDTH=224
 BATCH=2
 
 # LOSS=L1Loss
-# LOSS=L1Loss+KLLossLayer-1+1000
-# LOSS=EuclideanLoss
-LOSS=EuclideanLoss+KLLossLayer-1+1000
+# LOSS=L1Loss+KLDivLoss-1+1000
+LOSS=EuclideanLoss
+# LOSS=EuclideanLoss+KLDivLoss-1+1000
 
 # LOSS=L1LossLayer
 # LOSS=KLLossLayer
@@ -44,7 +46,7 @@ TRAIN_DS=salicon
 VAL_DS=salicon_val
 
 # Training setting variable
-BASE_LR=0.0001
+BASE_LR=0.01
 # BASE_LR=0.0000001
 LR_POLICY='inv'
 
