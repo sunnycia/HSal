@@ -109,12 +109,12 @@ class ImageDataset():
             image = image-self.MEAN_VALUE
             image = cv2.resize(image, dsize = self.img_size)
             image = np.transpose(image, (2, 0, 1))
-            image = image / 255.
+            image = image / image.max()
         else:
             # image = image - 128
             image = cv2.resize(image, dsize = self.img_size)
             image = image[None, ...]
-            image = image / 255.
+            image = image / image.max()
         return image
 
 
@@ -158,6 +158,7 @@ class ImageDataset():
 
     def next_data_batch(self, batch_size, stops):
         """Return the next `batch_size` examples from this data set."""
+        ### only return data
         if stops>1:
             return self.next_hdr_batch(batch_size, stops)
         else:
@@ -172,8 +173,9 @@ class ImageDataset():
             return np.array(batch_frame_list)
 
 
-    def next_batch(self, batch_size, stops):
+    def next_batch(self, batch_size, stops,color_space='rgb'):
         """Return the next `batch_size` examples from this data set."""
+
         if stops>1:
             return self.next_hdr_batch(batch_size, stops)
         else:
@@ -185,8 +187,22 @@ class ImageDataset():
                 # assert frame_path
                 frame = cv2.imread(frame_path).astype(np.float32)
                 density = cv2.imread(density_path, 0).astype(np.float32)
+                # print frame_path
+                if color_space == 'lms':
+                    if not frame_path.endswith('hdr'):
+                        frame = frame[:,:,::-1]
+                    # print frame.shape
+                    frame = hdr_utils.cam_dong(frame) ## 
+                    # print frame.shape
+                    # print frame;exit()
+                elif color_space== 'rgb':
+                    pass
+                else:
+                    raise NotImplementedError
+                # print frame.max(),frame.min(),frame.mean()
 
                 frame =self.pre_process_img(frame, False)
+                # print frame.max(),frame.min(),frame.mean()
                 density = self.pre_process_img(density, True)
                 batch_frame_list.append(frame)
                 batch_density_list.append(density)
@@ -215,6 +231,16 @@ class ImageDataset():
             image_list = hdr_utils.split(frame, stops=stops)
             for i in range(len(image_list)):
                 img = image_list[i]
+                if color_space == 'lms':
+                    if not frame_path.endswith('hdr'):
+                        img = img[:,:,::-1]
+                    # print img.shape
+                    img = hdr_utils.cam_dong(img) ## 
+                    # print img;exit()
+                elif color_space== 'rgb':
+                    pass
+                else:
+                    raise NotImplementedError
                 image_list[i]=self.pre_process_img(img, greyscale=False)
 
             # print frame.shape, len(image_list)

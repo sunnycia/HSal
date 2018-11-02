@@ -5,7 +5,7 @@
 # CAFFE_ROOT=/data/sunnycia/hdr_works/source_code/hdr_saliency/mycaffe
 # export PYTHONPATH=$CAFFE_ROOT/python:$PYTHONPATH
 
-GPU=5
+GPU=7
 ### comment this line if not in debug mode
 # DEBUG=1 
 
@@ -26,10 +26,12 @@ MODEL=v1_single_mscale_resnet50
 # MODEL=v1_single_mscale_rectified_resnet50
 # MODEL=v1_single_mscale_onedeconv_resnet50
 STOPS=1
-
+CS='lms'
 HEIGHT=448
 WIDTH=448
 BATCH=1
+
+
 
 # LOSS=L1Loss
 # LOSS=L1Loss+KLDivLoss-1+1000
@@ -85,11 +87,11 @@ if [ -z "$SNAPSHOT_DIR"];
     eval $CMD
     rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
     
-    CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --solver_type=$SOLVER_TYPE "
+    CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --solver_type=$SOLVER_TYPE --color_space=$CS "
      if [ -n "$DEBUG" ]; then CMD="$CMD"--debug; fi
     eval $CMD
 else
-    CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --snapshot_dir=$SNAPSHOT_DIR --solver_type=$SOLVER_TYPE "
+    CMD="python train.py --solver=$SOLVER --network=$NET --snapshot=$SNAPSHOT --batch=$BATCH --stops=$STOPS --height=$HEIGHT --width=$WIDTH --val_iter=$VAL_ITER --plt_iter=$PLT_ITER --training_ds=$TRAIN_DS --validation_ds=$VAL_DS --max_epoch=$EPOCH --pretrained_model=$PRE_MODEL --snapshot_dir=$SNAPSHOT_DIR --solver_type=$SOLVER_TYPE --color_space=$CS "
     if [ -n "$DEBUG" ];then CMD="$CMD"--debug; fi # restore snapshot state
     eval $CMD
 fi

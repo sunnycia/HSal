@@ -112,28 +112,38 @@ def cat(rgb):
     return xyz_adapt
 
 def xyz2lms(xyz):
+    ### transform xyz colorspace to lms color space.
+    # http://en.wikipedia.org/wiki/LMS_color_space
+    # using Hunt-Pointer-Estevez (HPE) transformation matrix 
+
     XYZtoLMS  = np.array([[ 0.3897,0.6890,-0.0787],
             [-0.2298,1.1834,0.0464],
             [0,   0,    1]]);
     lms = np.zeros(xyz.shape,dtype=np.float)
     for i in range(3):
+        # print XYZtoLMS[i,0]
         lms[:,:,i] =XYZtoLMS[i,0]*xyz[:,:,0]+XYZtoLMS[i,1]*xyz[:,:,1]+XYZtoLMS[i,2]*xyz[:,:,2]
 
-
-
     return lms
+
 def cam_dong(rgb):
     rgb = rgb.astype(np.float)
 
     xyz_adapt=cat(rgb)
     lms=xyz2lms(xyz_adapt)
-
+    # print lms.mean(),lms.max();exit()
     nc=0.57
     La = 0.265*rgb[:,:,0] + 0.670*rgb[:,:,1] + 0.065*rgb[:,:,2];
 
-    L  = abs(np.divide(np.power(lms[:,:,0],nc),(np.power(lms[:,:,0],nc) + np.power(La,nc)+0.00001)))
-    M  = abs(np.divide(np.power(lms[:,:,1],nc),(np.power(lms[:,:,1],nc) + np.power(La,nc)+0.00001)))
-    S  = abs(np.divide(np.power(lms[:,:,2],nc),(np.power(lms[:,:,2],nc) + np.power(La,nc)+0.00001)))
+    delta=1e-6
+    # lms[np.where(lms==0)] +=delta
+    # tmp = np.power(lms,nc)
+    # print tmp.mean(),tmp.max();exit()
+
+    lms = lms-lms.min();lms = lms/lms.max();
+    L  = abs(np.divide(np.power(lms[:,:,0],nc),(np.power(lms[:,:,0],nc) + np.power(La,nc)+delta)))
+    M  = abs(np.divide(np.power(lms[:,:,1],nc),(np.power(lms[:,:,1],nc) + np.power(La,nc)+delta)))
+    S  = abs(np.divide(np.power(lms[:,:,2],nc),(np.power(lms[:,:,2],nc) + np.power(La,nc)+delta)))
     RG = (11*L -12*M + S)/11 ; 
     BY = (L + M - 2*S)/9;
     RG = ndimage.median_filter(RG,3)
@@ -143,7 +153,12 @@ def cam_dong(rgb):
 
     A = (40*L+20*M+S)/61;
 
-    return RG,BY,A
+    feature_stack = np.concatenate([RG[...,None],BY[...,None],A[...,None]],axis=2)
+    # cv2.imshow('yo',feature_stack)
+    # cv2.waitKey(0)
+    # print RG.shape,BY.shape,A.shape,feature_stack.shape;exit()
+
+    return feature_stack
 
 
 def lum(rgb,rgb_coefficients=[0.2126,0.7152,0.0722]):
@@ -389,8 +404,6 @@ def create_ldrstack_from_hdr(img, fstops_distance=1,
 
     return image_list, stack_exposure ## [ldr_img_num, height, width, channel], [exposure list]
 
-    
-
 def tonemapping(hdr, tmo_func='reinhard', gamma=2.2, fstop=0):
     ## tone mapping hdr
     if tmo_func=='reinhard':
@@ -419,7 +432,7 @@ def tonemapping(hdr, tmo_func='reinhard', gamma=2.2, fstop=0):
     output = tmo.process(hdr.astype('float32'))
     return output
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
     ### test rgb2xyz
     img_path='/data/SaliencyDataset/Image/HDREYE/images/HDR/C44.hdr'
@@ -431,9 +444,8 @@ if __name__=='__main__':
     # rg,by,a=cam_dong(hdr_img)
     # cv2.imshow('yo',xyz_img/xyz_img.max())
     # print rg.shape,rg.max(),rg.mean(),rg.min()
-    cv2.imshow('yo',lms[:,:,::-1]/lms.max())
-    cv2.waitKey(0)
-
+    # cv2.imshow('yo',xyz_adapt/xyz_adapt.max())
+    # cv2.waitKey(0)
 
     ###test create_ldrstack_from_hdr
     # temp_dir='temp'

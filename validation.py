@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from saliency_metric.benchmark.metrics import *
 
-def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
+def validation(step, solver_instance, dataset_instance, snapshot_dir, stops,color_space='lms'):
 
     loss_list = []
     cc_list = []
@@ -23,7 +23,7 @@ def validation(step, solver_instance, dataset_instance, snapshot_dir, stops):
     	os.mkdir(validation_directory)
     # print dir(solver_instance), solver_instance.snapshot();exit()
     while dataset_instance.completed_epoch < 1:
-        frame_minibatch, _ = dataset_instance.next_batch(1,stops=stops)
+        frame_minibatch, _ = dataset_instance.next_batch(1,stops=stops,color_space=color_space)
 
         solver_instance.net.blobs['data'].data[...] = frame_minibatch
         # solver_instance.net.blobs['gt'].data[...] = density_minibatch

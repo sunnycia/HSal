@@ -26,6 +26,7 @@ def get_arguments():
 
     parser.add_argument('--solver_type', type=str, default='SGDSolver',  help='model save path')
 
+    parser.add_argument('--color_space', type=str, default='rgb',  help='model save path')
     parser.add_argument('--snapshot', type=str, help='model save path')
     parser.add_argument('--batch', type=int, help='training mini batch')
     parser.add_argument('--stops', type=int, help='training sdr stops')
@@ -126,11 +127,13 @@ while training_dataset.completed_epoch < max_epoch:
                    solver_instance=solver, 
                    dataset_instance=validation_dataset,
                    snapshot_dir = args.snapshot,
-                   stops=args.stops)
+                   stops=args.stops,
+                   color_space=args.color_space)
         validation_dataset.completed_epoch=0
 
         # pass
-    frame_minibatch, density_minibatch = training_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops)
+    frame_minibatch, density_minibatch = training_dataset.next_batch(batch_size=args.batch,stops=args.stops,color_space=args.color_space)
+    # frame_minibatch, density_minibatch = training_dataset.next_hdr_batch(batch_size=args.batch,stops=args.stops,color_space=args.color_space)
 
     solver.net.blobs['data'].data[...] = frame_minibatch
     solver.net.blobs['gt'].data[...] = density_minibatch
