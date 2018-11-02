@@ -1608,45 +1608,150 @@ def v2_multi_lateconcat_vgg16(depth, batch, stops,height=600,width=800, loss='L1
     model.layer.extend(layers)
     return model
 
-def v3_multi_fusion_network(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
-    model = caffe_pb2.NetParameter()
-    model.name = 'fusion_network'
-    num = configs[depth]
-    layers = []
+
+
+# def bn_relu_conv(name, bottom, ks, nout, stride, pad, dropout):
+#     layers.append(Bn_Sc())
+#     layers.append(Act())
+#     layers.append(Conv())
+#     if dropout>0:
+#         layers.append(Dropout())
+#     return layers
+
+# def add_layer(name, bottom, num_filter, dropout):
+#     layers.extend(bn_relu_conv(name, bottom, ks=3, nout=num_filter, stride=1, pad=1, dropout=dropout))
+#     layers.append(Concat(,[bottom,layers.tops[-1]]))
+#     return layers
+
+# def transition(name, bottom, num_filter, dropout):
+
+#     layers.extend(bn_relu_conv(name, bottom, ks=1, nout=num_filter, stride=1, pad=0, dropout=dropout))
+#     layers.append(Pool())
+#     return layers
+
+# def v3_single_mscale_densenet121(depth, batch, stops=1,height=600,width=800, loss='KLLossLayer',phase='train'):
+#     model = caffe_pb2.NetParameter()
+#     model.name = 'Densenet121'
+#     num = configs[depth]
+#     layers = []
+#     data_channel=stops*3
+#     data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
+#     gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
     
-    data_param_str = str(batch)+',2'+','+str(height)+','+str(width)
-    gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+#     layers.append(Data_python('data', ['data'], param_str=data_param_str))
+#     layers.append(Pool('data_lowres', 'data', 'max', 2, 2, 0))
+
+#     if phase=='train':
+#         layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+#     elif phase=='deploy':
+#         pass
+#     else:
+#         raise NotImplementedError
+
+#     first_output=16
+#     growth_rate=12,dropout=0.2
+#     depth=40
+
+#     layers.append(Conv('conv1', 'data', first_output, 3, 1, 1, lr_mult=1, weight_filler='msra', have_bias=False):)
+
+#     N = (depth-4)/3
+#     for i in range(N):
+#         layers.append(add_layer)
+#         nchannels += growth_rate
+#     layers.append(transition(model,nchannels,dropout))
+
+#     for i in range(N):
+#         layers.append(add_layer)
+#         nchannels += growth_rate
+#     layers.append(transition(model,nchannels,dropout))
+
+#     for i in range(N):
+#         layers.append(add_layer)
+#         nchannels += growth_rate
+
+#     model = L.BatchNorm(model, in_place=False, param=[dict(lr_mult=0, decay_mult=0), dict(lr_mult=0, decay_mult=0), dict(lr_mult=0, decay_mult=0)])
+
+#     model = L.Scale(model, bias_term=True, in_place=True, filler=dict(value=1), bias_filler=dict(value=0))
+#     model = L.ReLU(model, in_place=True)
+#     model = L.Pooling(model, pool=P.Pooling.AVE, global_pooling=True)
+#     model = L.InnerProduct(model, num_output=10, bias_term=True, weight_filler=dict(type='xavier'), bias_filler=dict(type='constant'))
+#     loss = L.SoftmaxWithLoss(model, label)
+#     accuracy = L.Accuracy(model, label)
+
+
+# def densenet(data_file, mode='train', batch_size=64, depth=40, first_output=16, growth_rate=12, dropout=0.2):
+#     data, label = L.Data(source=data_file, backend=P.Data.LMDB, batch_size=batch_size, ntop=2, 
+#               transform_param=dict(mean_file="/home/zl499/caffe/examples/cifar10/mean.binaryproto"))
+
+#     nchannels = first_output
+#     model = L.Convolution(data, kernel_size=3, stride=1, num_output=nchannels,
+#                         pad=1, bias_term=False, weight_filler=dict(type='msra'), bias_filler=dict(type='constant'))
+
+#     N = (depth-4)/3
+#     for i in range(N):
+#         model = add_layer(model, growth_rate, dropout)
+#         nchannels += growth_rate
+#     model = transition(model, nchannels, dropout)
+
+#     for i in range(N):
+#         model = add_layer(model, growth_rate, dropout)
+#         nchannels += growth_rate
+#     model = transition(model, nchannels, dropout)
+
+#     for i in range(N):
+#         model = add_layer(model, growth_rate, dropout)
+#         nchannels += growth_rate
+
+
+#     model = L.BatchNorm(model, in_place=False, param=[dict(lr_mult=0, decay_mult=0), dict(lr_mult=0, decay_mult=0), dict(lr_mult=0, decay_mult=0)])
+#     model = L.Scale(model, bias_term=True, in_place=True, filler=dict(value=1), bias_filler=dict(value=0))
+#     model = L.ReLU(model, in_place=True)
+#     model = L.Pooling(model, pool=P.Pooling.AVE, global_pooling=True)
+#     model = L.InnerProduct(model, num_output=10, bias_term=True, weight_filler=dict(type='xavier'), bias_filler=dict(type='constant'))
+#     loss = L.SoftmaxWithLoss(model, label)
+#     accuracy = L.Accuracy(model, label)
+#     return to_proto(loss, accuracy)
+
+
+# def v3_multi_fusion_network(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase='train'):
+#     model = caffe_pb2.NetParameter()
+#     model.name = 'fusion_network'
+#     num = configs[depth]
+#     layers = []
     
-    layers.append(Data_python('data', ['data'], param_str=data_param_str))
+#     data_param_str = str(batch)+',2'+','+str(height)+','+str(width)
+#     gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
+#     layers.append(Data_python('data', ['data'], param_str=data_param_str))
 
-    if phase=='train':
-        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
-    elif phase=='deploy':
-        pass
-    else:
-        raise NotImplementedError
+#     if phase=='train':
+#         layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+#     elif phase=='deploy':
+#         pass
+#     else:
+#         raise NotImplementedError
 
-    layers.append(Conv('conv1',  'data', 16, 3, 1, 1, lr_mult=1, have_bias=True))
-    layers.extend(Bn_Sc('conv1', 'conv1'))
-    layers.extend(Act('conv1',  'conv1'))
+#     layers.append(Conv('conv1',  'data', 16, 3, 1, 1, lr_mult=1, have_bias=True))
+#     layers.extend(Bn_Sc('conv1', 'conv1'))
+#     layers.extend(Act('conv1',  'conv1'))
 
-    layers.append(Conv('conv2', layers[-1].top[0], 16, 3, 1, 1,lr_mult=1, have_bias=True))
-    layers.extend(Bn_Sc('conv2', 'conv2'))
-    layers.extend(Act('conv2', 'conv2'))
+#     layers.append(Conv('conv2', layers[-1].top[0], 16, 3, 1, 1,lr_mult=1, have_bias=True))
+#     layers.extend(Bn_Sc('conv2', 'conv2'))
+#     layers.extend(Act('conv2', 'conv2'))
 
-    layers.append(Conv('predict', layers[-1].top[0], 1, 3, 1, 1,lr_mult=1, have_bias=True))
-    layers.extend(Bn_Sc('predict', layers[-1].top[0]))
-    layers.extend(Act('predict', layers[-1].top[0]))
+#     layers.append(Conv('predict', layers[-1].top[0], 1, 3, 1, 1,lr_mult=1, have_bias=True))
+#     layers.extend(Bn_Sc('predict', layers[-1].top[0]))
+#     layers.extend(Act('predict', layers[-1].top[0]))
 
-    if phase=='train':
-        layers.extend(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
-    elif phase=='deploy':
-        pass
-    else:
-        raise NotImplementedError
+#     if phase=='train':
+#         layers.extend(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
+#     elif phase=='deploy':
+#         pass
+#     else:
+#         raise NotImplementedError
 
-    model.layer.extend(layers)
-    return model
+#     model.layer.extend(layers)
+#     return model
 
 # def v2_luminance()
 #     model = caffe_pb2.NetParameter()

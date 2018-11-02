@@ -5,7 +5,7 @@
 # CAFFE_ROOT=/data/sunnycia/hdr_works/source_code/hdr_saliency/mycaffe
 # export PYTHONPATH=$CAFFE_ROOT/python:$PYTHONPATH
 
-GPU=7
+GPU=5
 ### comment this line if not in debug mode
 # DEBUG=1 
 
@@ -27,26 +27,29 @@ MODEL=v1_single_mscale_resnet50
 # MODEL=v1_single_mscale_onedeconv_resnet50
 STOPS=1
 
-HEIGHT=224
-WIDTH=224
-BATCH=2
+HEIGHT=448
+WIDTH=448
+BATCH=1
 
 # LOSS=L1Loss
 # LOSS=L1Loss+KLDivLoss-1+1000
-LOSS=EuclideanLoss
+# LOSS=EuclideanLoss
 # LOSS=EuclideanLoss+KLDivLoss-1+1000
 
 # LOSS=L1LossLayer
-# LOSS=KLLossLayer
+LOSS=KLLossLayer
 # LOSS=KLDivLoss
 # LOSS=GBDLossLayer
+
+# TRAIN_DS=fddb
 TRAIN_DS=salicon
 # TRAIN_DS=salicon_val
 # VAL_DS=hdreye_hdr
 VAL_DS=salicon_val
+# VAL_DS=fddb_val
 
 # Training setting variable
-BASE_LR=0.01
+BASE_LR=0.0001
 # BASE_LR=0.0000001
 LR_POLICY='inv'
 

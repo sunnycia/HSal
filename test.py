@@ -19,7 +19,7 @@ def get_arguments():
     # parser.add_argument('--model_path', type=str, required=True)
     # parser.add_argument('--net_path', type=str, required=True)
     # parser
-    parser.add_argument('--dsname', type=str, default='hdreye_hdr', help='training dataset')
+    parser.add_argument('--dsname', type=str, default='hdreye_exposion', help='training dataset')
 
     parser.add_argument('--stops', type=int, help='training sdr stops')
     parser.add_argument('--width', type=int, help='image width')
@@ -86,4 +86,3 @@ for model_path in model_path_list:
 
         cv2.imwrite(sm_path, sal_map)
         print sm_path, 'saved.'
-        

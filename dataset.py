@@ -27,6 +27,29 @@ class ImageDataset():
             self.density_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val_small/density'
             self.saliency_basedir = '/data/SaliencyDataset/Image/SALICON/DATA/train_val/val_small/saliency'
 
+        elif ds_name == 'atrainset':
+            self.frame_basedir= '/data/SaliencyDataset/Image/Atrainset/training_images'
+            self.fixation_basedir = None
+            self.density_basedir = '/data/SaliencyDataset/Image/Atrainset/training_gt_imgs'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/Atrainset/saliency'
+        elif ds_name == 'atrainset_val':
+            self.frame_basedir= '/data/SaliencyDataset/Image/Atrainset/test_images'
+            self.fixation_basedir = None
+            self.density_basedir = '/data/SaliencyDataset/Image/Atrainset/test_gt_imgs'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/Atrainset/saliency'
+
+
+        elif ds_name == 'fddb':
+            self.frame_basedir= '/data/SaliencyDataset/Image/FDDB/train_img'
+            self.fixation_basedir = None
+            self.density_basedir = '/data/SaliencyDataset/Image/FDDB/train_mask'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/FDDB/saliency'
+        elif ds_name == 'fddb_val':
+            self.frame_basedir= '/data/SaliencyDataset/Image/FDDB/test_img'
+            self.fixation_basedir = None
+            self.density_basedir = '/data/SaliencyDataset/Image/FDDB/test_mask'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/FDDB/saliency'
+
         elif ds_name=='hdreye_hdr':
             self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/HDR'
             self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'

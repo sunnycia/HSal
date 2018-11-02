@@ -4,11 +4,149 @@ import os
 import imageio 
 import numpy as np
 import cv2
+from scipy import ndimage
 import time
 import shutil
 import uuid
+import sys
 
-def lum(rgb):
+normalized_val_uint16 = 65535
+
+# Bradford's XYZ2LMS <http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html>
+XYZ_to_LMS_mat = [ [ 0.8951000,  0.2664000, -0.1614000 ],
+                   [ -0.7502000, 1.7135000,  0.0367000 ],
+                   [ 0.0389000,  -0.0685000, 1.0296000 ] ]
+LMS_to_XYZ_mat = [ [ 0.9869929,  -0.1470543, 0.1599627 ],
+                   [ 0.4323053,   0.5183603, 0.0492912 ],
+                   [ -0.0085287,  0.0400428, 0.9684867 ] ]
+RGB_to_XYZ_mat = [ [ 0.412391,  0.357584,  0.180481 ],
+                   [ 0.212639,  0.715169,  0.072192 ],
+                   [ 0.019331,  0.119195,  0.950532 ] ]
+XYZ_to_RGB_mat = [ [ 3.240970, -1.537383, -0.498611 ],
+                   [-0.969244,  1.875968,  0.041555 ],
+                   [ 0.055630, -0.203977,  1.056972 ] ]
+XYZ_to_LMS_mat = np.float32(XYZ_to_LMS_mat)
+LMS_to_XYZ_mat = np.float32(LMS_to_XYZ_mat)
+RGB_to_XYZ_mat = np.float32(RGB_to_XYZ_mat)
+XYZ_to_RGB_mat = np.float32(XYZ_to_RGB_mat)
+# ref : http://www.filmlight.ltd.uk/pdf/whitepapers/FL-TL-TN-0417-StdColourSpaces.pdf
+#   name              x        y
+color_temp_4000k = [0.3820, 0.3792]
+color_temp_4500k = [0.3620, 0.3656]
+color_temp_5000k = [0.3460, 0.3532]
+color_temp_5500k = [0.3330, 0.3421]
+color_temp_6000k = [0.3224, 0.3324]
+color_temp_6500k = [0.3137, 0.3239]
+color_temp_D40   = [0.3823, 0.3838]
+color_temp_D45   = [0.3621, 0.3709]
+color_temp_D50   = [0.3457, 0.3587]
+color_temp_D55   = [0.3325, 0.3476]
+color_temp_D60   = [0.3217, 0.3378]
+color_temp_D65   = [0.3128, 0.3292]
+color_temp_D70   = [0.3054, 0.3216]
+
+
+
+def rgb2xyz(rgb):
+    RGBtoXYZ = np.array([[0.5141364, 0.3238786,  0.16036376],
+              [0.265068,  0.67023428, 0.06409157],
+              [0.0241188, 0.1228178,  0.84442666]])
+    # RGBtoXYZ_mat =np.float32(RGBtoXYZ)
+    result = np.zeros(rgb.shape,dtype=np.float)
+
+    for i in range(3):
+        result[:,:,i] =RGBtoXYZ[i,0]*rgb[:,:,0]+RGBtoXYZ[i,1]*rgb[:,:,1]+RGBtoXYZ[i,2]*rgb[:,:,2]
+
+    return result
+
+def cat(rgb):
+    # xyz adapt
+    rgb = rgb.astype(np.float)
+
+    xyz_img = rgb2xyz(rgb)
+
+    M_cat02 = np.array([[0.7328,  0.4296, -0.1624],
+              [-0.7036, 1.6974,  0.0061],
+              [ 0.0030, 0.0136,  0.9834]])
+
+    rgb_img = np.zeros(rgb.shape,dtype=np.float)
+    for i in range(3):
+        rgb_img[:,:,i] =M_cat02[i,0]*xyz_img[:,:,0]+M_cat02[i,1]*xyz_img[:,:,1]+M_cat02[i,2]*xyz_img[:,:,2]
+    La = lum(rgb,[0.265,0.670,0.065])
+
+    F = 1
+    D = F*(1-(1/3.6)*np.exp(-1*(La+42)/92))
+
+    # Tristimulus values of white point
+    # Table A4 Page 294 Ohta Robinson
+    # Illuminant  X        Y       Z
+    #    A       109.85   100.00  35.58
+    #    D65      95.04   100.00 108.89
+    #    C        98.07   100.00 118.23
+    #    D50      96.42   100.00  82.49
+    #    D55      95.68   100.00  92.14
+    #    D75      94.96   100.00 122.61
+    #    B        99.09   100.00  85.31
+
+    Xw=95.04;
+    Yw=100.00;
+    Zw=108.89;
+
+    Rw = np.dot(M_cat02[0,:],np.array([[Xw],[Yw],[Zw]]))
+    Gw = np.dot(M_cat02[1,:],np.array([[Xw],[Yw],[Zw]]))
+    Bw = np.dot(M_cat02[2,:],np.array([[Xw],[Yw],[Zw]]))
+
+    Rc = np.multiply((Yw*D/Rw+(1-D)),rgb_img[:,:,0])
+    Gc = np.multiply((Yw*D/Gw+(1-D)),rgb_img[:,:,1])
+    Bc = np.multiply((Yw*D/Bw+(1-D)),rgb_img[:,:,2])
+
+    rgb_adapt = np.zeros(rgb.shape,dtype=np.float)
+    rgb_adapt[:,:,0] = Rc
+    rgb_adapt[:,:,1] = Gc
+    rgb_adapt[:,:,2] = Bc
+
+    Mi_cat02 = np.linalg.inv(M_cat02);
+    xyz_adapt = np.zeros(rgb.shape,dtype=np.float)
+    for i in range(3):
+        xyz_adapt[:,:,i] =M_cat02[i,0]*rgb_adapt[:,:,0]+M_cat02[i,1]*rgb_adapt[:,:,1]+M_cat02[i,2]*rgb_adapt[:,:,2]
+    return xyz_adapt
+
+def xyz2lms(xyz):
+    XYZtoLMS  = np.array([[ 0.3897,0.6890,-0.0787],
+            [-0.2298,1.1834,0.0464],
+            [0,   0,    1]]);
+    lms = np.zeros(xyz.shape,dtype=np.float)
+    for i in range(3):
+        lms[:,:,i] =XYZtoLMS[i,0]*xyz[:,:,0]+XYZtoLMS[i,1]*xyz[:,:,1]+XYZtoLMS[i,2]*xyz[:,:,2]
+
+
+
+    return lms
+def cam_dong(rgb):
+    rgb = rgb.astype(np.float)
+
+    xyz_adapt=cat(rgb)
+    lms=xyz2lms(xyz_adapt)
+
+    nc=0.57
+    La = 0.265*rgb[:,:,0] + 0.670*rgb[:,:,1] + 0.065*rgb[:,:,2];
+
+    L  = abs(np.divide(np.power(lms[:,:,0],nc),(np.power(lms[:,:,0],nc) + np.power(La,nc)+0.00001)))
+    M  = abs(np.divide(np.power(lms[:,:,1],nc),(np.power(lms[:,:,1],nc) + np.power(La,nc)+0.00001)))
+    S  = abs(np.divide(np.power(lms[:,:,2],nc),(np.power(lms[:,:,2],nc) + np.power(La,nc)+0.00001)))
+    RG = (11*L -12*M + S)/11 ; 
+    BY = (L + M - 2*S)/9;
+    RG = ndimage.median_filter(RG,3)
+    BY = ndimage.median_filter(BY,3)
+    # RG = medfilt2(RG);
+    # BY = medfilt2(BY);
+
+    A = (40*L+20*M+S)/61;
+
+    return RG,BY,A
+
+
+def lum(rgb,rgb_coefficients=[0.2126,0.7152,0.0722]):
     ''' a python reinplementation of lum.m in HDR_toolbox'''
     if len(rgb.shape)==2:
         return rgb
@@ -16,7 +154,7 @@ def lum(rgb):
         if rgb.shape[-1]==1:
             return rgb
         elif rgb.shape[-1]==3:
-            lum = 0.2126*rgb[:, :, 0]+0.7152*rgb[:, :, 1]+0.0722*rgb[:, :, 2]
+            lum = rgb_coefficients[0]*rgb[:, :, 0]+rgb_coefficients[1]*rgb[:, :, 1]+rgb_coefficients[2]*rgb[:, :, 2]
             return lum
         else:
             return -1
@@ -201,6 +339,7 @@ def exposure_histogram_sampling(img, n_bit=8, eh_overlap=2.0):
             fstops.append(value)
 
     return fstops
+
 def create_ldrstack_from_hdr(img, fstops_distance=1, 
                           sampling_mode='histogram', 
                           lin_type='gamma', 
@@ -279,26 +418,42 @@ def tonemapping(hdr, tmo_func='reinhard', gamma=2.2, fstop=0):
     #     return output
     output = tmo.process(hdr.astype('float32'))
     return output
-if __name__=='__main__':
-    ###test create_ldrstack_from_hdr
-    temp_dir='temp'
-    if not os.path.isdir(temp_dir):
-        os.makedirs(temp_dir)
 
-    # img_dir = '/data/SaliencyDataset/Image/ETHyma/images'
-    img_dir = '/data/SaliencyDataset/Image/HDREYE/images/HDR'
-    img_path_list = glob.glob(os.path.join(img_dir, '*.*'))
-    # img_path_list=['/data/SaliencyDataset/Image/HDREYE/images/HDR/C44.hdr']
-    for img_path in img_path_list:
-        print 'processing',img_path
-        img = imageio.imread(img_path)
-        ldr_stack, exposure_list = create_ldrstack_from_hdr(img)
-        for i in range(len(ldr_stack)):
-            ldr = ldr_stack[i][:,:,::-1]
-            save_path = os.path.join(temp_dir, os.path.splitext(os.path.basename(img_path))[0]+'_'+str(i)+'.jpg')
-            # save_path = os.path.join(save_dir, str(i)+'.jpg')
-            cv2.imwrite(save_path, ldr*255)
-            print save_path, 'saved.'
+if __name__=='__main__':
+
+    ### test rgb2xyz
+    img_path='/data/SaliencyDataset/Image/HDREYE/images/HDR/C44.hdr'
+    hdr_img = imageio.imread(img_path)
+    xyz_adapt=cat(hdr_img)
+    lms=xyz2lms(xyz_adapt)
+
+    # xyz_img = rgb2xyz(hdr_img)
+    # rg,by,a=cam_dong(hdr_img)
+    # cv2.imshow('yo',xyz_img/xyz_img.max())
+    # print rg.shape,rg.max(),rg.mean(),rg.min()
+    cv2.imshow('yo',lms[:,:,::-1]/lms.max())
+    cv2.waitKey(0)
+
+
+    ###test create_ldrstack_from_hdr
+    # temp_dir='temp'
+    # if not os.path.isdir(temp_dir):
+    #     os.makedirs(temp_dir)
+
+    # # img_dir = '/data/SaliencyDataset/Image/ETHyma/images'
+    # img_dir = '/data/SaliencyDataset/Image/HDREYE/images/HDR'
+    # img_path_list = glob.glob(os.path.join(img_dir, '*.*'))
+    # # img_path_list=['/data/SaliencyDataset/Image/HDREYE/images/HDR/C44.hdr']
+    # for img_path in img_path_list:
+    #     print 'processing',img_path
+    #     img = imageio.imread(img_path)
+    #     ldr_stack, exposure_list = create_ldrstack_from_hdr(img)
+    #     for i in range(len(ldr_stack)):
+    #         ldr = ldr_stack[i][:,:,::-1]
+    #         save_path = os.path.join(temp_dir, os.path.splitext(os.path.basename(img_path))[0]+'_'+str(i)+'.jpg')
+    #         # save_path = os.path.join(save_dir, str(i)+'.jpg')
+    #         cv2.imwrite(save_path, ldr*255)
+    #         print save_path, 'saved.'
     
 
     ###test exposure splitting

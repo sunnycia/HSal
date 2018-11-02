@@ -60,7 +60,7 @@ class SaliencyNet():
 
     def center_enhance(self, sal_map):
         center_map_path = 'test_imgs/center.jpg'
-        center_map = cv2.imread(center_map_path, 0)
+        center_map = self.mat2gray(cv2.imread(center_map_path, 0))
         center_map = self.mat2gray(cv2.resize(center_map,dsize=sal_map.shape))
         sal_map = sal_map * center_map
         return sal_map
@@ -108,6 +108,8 @@ class SaliencyNet():
             sal_map = self.border_process(sal_map)
         if 'chessbox' in postprocess_list:
             sal_map = self.chessbox_process(sal_map)
+        if 'norm' in postprocess_list:
+            sal_map = self.normalization(sal_map)
         if 'fang' in postprocess_list:
             sal_map = self.fang_enhance(sal_map)
         if 'center' in postprocess_list:
