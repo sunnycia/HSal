@@ -80,7 +80,7 @@ for model_path in model_path_list:
         # sal_map = postprocess_saliency_map(prediction)
 
         # print sal_map[0,0]
-        img_name = os.path.basename(ds.batch_frame_path_list[0]).split('.')[0]
+        img_name = os.path.splitext(os.path.basename(ds.batch_frame_path_list[0]))[0]
         sm_name = img_name+'.jpg'
         sm_path = os.path.join(save_dir, sm_name)
 
