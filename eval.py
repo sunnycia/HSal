@@ -14,6 +14,7 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dsname', type=str, default='hdreye_hdr', help='training dataset')
     parser.add_argument('--metric_dir', type=str, default='../matlab-metric', help='training dataset')
+    parser.add_argument('--no_sauc', type=int, default=0, help='parameter of sauc')
     parser.add_argument('--other_num', type=int, default=10, help='parameter of sauc')
 
     return parser.parse_args()
@@ -28,7 +29,7 @@ if not os.path.isdir(save_base):
 sal_base = ds.saliency_basedir
 dens_dir = ds.density_basedir
 fixa_dir = ds.fixation_basedir
-
+print sal_base,dens_dir,fixa_dir
 
 sal_subdir_list =  [ name for name in os.listdir(sal_base) if os.path.isdir(os.path.join(sal_base, name)) ]
 # finish_list = []
@@ -40,16 +41,19 @@ sal_subdir_list =  [ name for name in os.listdir(sal_base) if os.path.isdir(os.p
 # print sal_subdir_list
 
 for sal_subdir in sal_subdir_list:
-    sal_dir = os.path.join(sal_base, sal_subdir)
-    cmd = 'matlab -nodesktop -nosplash -nodisplay -r "addpath(\'metric_code\');save_base=\'%s\';dsname=\'%s\';sal_dir=\'%s\';dens_dir=\'%s\';fixa_dir=\'%s\';other_num=%s;metric_image_base;exit()"' % (save_base, args.dsname, sal_dir, dens_dir, fixa_dir,str(args.other_num))
-    print cmd
+    sal_dir = os.path.join(sal_base, sal_subdir) 
+    var_str = 'save_base=\'%s\';dsname=\'%s\';sal_dir=\'%s\';dens_dir=\'%s\';fixa_dir=\'%s\';other_num=%s;'% (save_base, args.dsname, sal_dir, dens_dir, fixa_dir,str(args.other_num))
+    if args.no_sauc!=0:
+        print 'no sauc calc'
+        var_str = var_str+'no_sauc=\'1\';';
+    cmd = 'matlab -nodesktop -nosplash -nodisplay -r "addpath(\'metric_code\');%s metric_image_base;exit()"' % var_str
+    print 'running:', cmd
     if os.path.isfile(os.path.join(save_base, args.dsname+'_'+sal_subdir+'.mat')):
         continue
     else:
         os.system(cmd)
     # finish_list.append(sal_subdir)
     # pkl.dump(finish_list, open(finish_dict_path, 'wb'))
-
 
 # stastics
 cmd = 'matlab -nodesktop -nosplash -nodisplay -r "addpath(\'metric_code\');save_base=\'%s\';metric_stastics;exit()"' % save_base

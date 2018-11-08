@@ -50,12 +50,12 @@ class ImageDataset():
             self.density_basedir = '/data/SaliencyDataset/Image/FDDB/test_mask'
             self.saliency_basedir = '/data/SaliencyDataset/Image/FDDB/saliency'
 
-        elif ds_name=='hdreye_hdr':
+        elif ds_name=='hdreye':
             self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/HDR'
             self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
             self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
             # self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/hdr_saliency_map'
-            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/HDR'
 
 
         elif ds_name=='hdreye_sdr':
@@ -69,17 +69,68 @@ class ImageDataset():
             self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
             self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/linear'
         elif ds_name=='hdreye_reinhard':
-            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/reinhard'
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/reinhard-toolbox'
             self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
             self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
-            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/reinhard'
-        elif ds_name=='hdreye_exposion':
-            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/exposion'
-            # self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/LDR-JPG'
-            # self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
-            self.fixation_basedir=None
-            self.density_basedir=None
-            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/exposion'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/reinhard-toolbox'
+        elif ds_name=='hdreye_bestexposure':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/best_exposure'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
+            self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/best_exposure'
+        elif ds_name=='hdreye_stackfusion_avg':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/exposure_stack'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
+            self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/fusion/AVG'
+        elif ds_name=='hdreye_stackfusion_cw':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/exposure_stack'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
+            self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/fusion/CW'
+        elif ds_name=='hdreye_stackfusion_max':
+            self.frame_basedir = '/data/SaliencyDataset/Image/HDREYE/images/exposure_stack'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/HDREYE/fixation_map/HDR'
+            self.density_basedir = '/data/SaliencyDataset/Image/HDREYE/density_map/HDR'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/HDREYE/saliency_map/fusion/MAX'
+
+
+        elif ds_name=='ethyma':
+            self.frame_basedir = '/data/SaliencyDataset/Image/ETHyma/images'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/ETHyma/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/ETHyma/density'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/ETHyma/saliency_map/HDR'
+        elif ds_name=='ethyma_linear':
+            self.frame_basedir = '/data/SaliencyDataset/Image/ETHyma/images_linear'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/ETHyma/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/ETHyma/density'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/ETHyma/saliency_map/linear'
+        elif ds_name=='ethyma_reinhard':
+            self.frame_basedir = '/data/SaliencyDataset/Image/ETHyma/reinhard'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/ETHyma/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/ETHyma/density'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/ETHyma/saliency_map/reinhard'
+        elif ds_name=='ethyma_bestexposure':
+            self.frame_basedir = '/data/SaliencyDataset/Image/ETHyma/best_exposure'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/ETHyma/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/ETHyma/density'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/ETHyma/saliency_map/best_exposure'
+        elif ds_name=='ethyma_stackfusion_avg':
+            self.frame_basedir = '/data/SaliencyDataset/Image/ETHyma/exposure_stack'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/ETHyma/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/ETHyma/density'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/ETHyma/saliency_map/fusion/AVG'
+        elif ds_name=='ethyma_stackfusion_cw':
+            self.frame_basedir = '/data/SaliencyDataset/Image/ETHyma/exposure_stack'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/ETHyma/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/ETHyma/density'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/ETHyma/saliency_map/fusion/CW'
+        elif ds_name=='ethyma_stackfusion_max':
+            self.frame_basedir = '/data/SaliencyDataset/Image/ETHyma/exposure_stack'
+            self.fixation_basedir = '/data/SaliencyDataset/Image/ETHyma/fixation'
+            self.density_basedir = '/data/SaliencyDataset/Image/ETHyma/density'
+            self.saliency_basedir = '/data/SaliencyDataset/Image/ETHyma/saliency_map/fusion/MAX'
+
         else:
             raise NotImplementedError
 

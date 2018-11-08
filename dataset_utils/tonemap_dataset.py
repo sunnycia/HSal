@@ -18,13 +18,18 @@ tm_operator = args.tm_operator
 if dataset=='hdreye':
     frame_base='/data/SaliencyDataset/Image/HDREYE/images/HDR'
 
+elif dataset=='ethyma':
+    frame_base='/data/SaliencyDataset/Image/ETHyma/images'
+else: 
+    raise NotImplementedError
+
 output_base = frame_base+'_'+tm_operator
 if not os.path.isdir(output_base):
     os.makedirs(output_base)
 image_path_list = glob.glob(os.path.join(frame_base, '*.hdr'))
 print image_path_list
 for image_path in image_path_list:
-    image_name = os.path.basename(image_path).split('.')[0]+'.png'
+    image_name = os.path.splitext(os.path.basename(image_path))[0]+'.png'
     output_path = os.path.join(output_base, image_name)
     hdr_img = imageio.imread(image_path)[:, :, ::-1] ##convert to bgr
     tmo_img = tonemapping(hdr_img, tm_operator)

@@ -1127,6 +1127,87 @@ def v1_single_mscale_resnet50(depth, batch, stops=1,height=600,width=800, loss='
     model.layer.extend(layers)
     return model
 
+
+
+def v1_single_mscale_tripleres_resnet50(depth, batch, stops=1,height=600,width=800, loss='L1LossLayer',phase='train'):
+    model = caffe_pb2.NetParameter()
+    model.name = 'ResNet_{}'.format(depth)
+    num = configs[depth]
+    layers = []
+    data_channel=stops*3
+    data_param_str = str(batch)+','+str(data_channel)+','+str(height)+','+str(width)
+    gt_param_str = str(batch)+',1'+','+str(height)+','+str(width)
+    
+    layers.append(Data_python('data', ['data'], param_str=data_param_str))
+    layers.append(Pool('data_midres', 'data', 'max', 2, 2, 0))
+    layers.append(Pool('data_lowres', 'data_midres', 'max', 2, 2, 0))
+
+
+    if phase=='train':
+        layers.append(Data_python('gt', ['gt'], param_str=gt_param_str))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+
+    # bottom_list[1] save the low resolution featu
+    bottom_list = []
+    for i in range(3):
+        idx=i+1
+        # conv1
+        if i ==0:
+            layers.append(Conv('%s_conv1' % str(idx), 'data', 64, 7, 2, 3, have_bias=True))
+        elif i==1:
+            layers.append(Conv('%s_conv1' % str(idx), 'data_midres', 64, 7, 2, 3, have_bias=True))            
+        else:
+            layers.append(Conv('%s_conv1' % str(idx), 'data_lowres', 64, 7, 2, 3, have_bias=True))            
+
+        layers.extend(Bn_Sc('%s_conv1' % str(idx), layers[-1].top[0]))
+        layers.extend(Act('%s_conv1' % str(idx), layers[-1].top[0]))
+
+        # resnet block
+        layers.extend(ResLayer('%s_res2' % str(idx), layers[-1].top[0], num[0], 64, 1, 'first'))
+        layers.extend(ResLayer('%s_res3' % str(idx), layers[-1].top[0], num[1], 128, 2))
+        layers.extend(ResLayer('%s_res4' % str(idx), layers[-1].top[0], num[2], 256, 2))
+        layers.extend(ResLayer('%s_res5' % str(idx), layers[-1].top[0], num[3], 512, 2))
+        layers.extend(Bn_Sc('%s_conv5' % str(idx), layers[-1].top[0]))
+        bottom_list.append('%s_conv5' % str(idx))
+
+    ## feature upsampling
+    layers.append(Bilinear_upsample(bottom_list[1]+'_upsample', bottom_list[1], 2048, 2, lr_mult=0, weight_filler='bilinear'))
+    layers.append(Bilinear_upsample(bottom_list[2]+'_upsample', bottom_list[2], 2048, 4, lr_mult=0, weight_filler='bilinear'))
+    bottom_list[1] = bottom_list[1]+'_upsample'
+    bottom_list[2] = bottom_list[2]+'_upsample'
+
+    ## feature concatenation
+    layers.extend(Concat('feat_concat', bottom_list))
+
+    layers.append(Bilinear_upsample('deconv1', 'feat_concat', 256, 2, lr_mult=1))
+    layers.extend(Bn_Sc('deconv1', layers[-1].top[0]))
+    layers.extend(Act('deconv1', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('deconv2', 'deconv1', 128, 2, lr_mult=1))
+    layers.extend(Bn_Sc('deconv2', layers[-1].top[0]))
+    layers.extend(Act('deconv2', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('deconv3', 'deconv2', 64, 2, lr_mult=1))
+    layers.extend(Bn_Sc('deconv3', layers[-1].top[0]))
+    layers.extend(Act('deconv3', layers[-1].top[0]))
+    # layers.append(Bilinear_upsample('deconv4', 'deconv3', 3, 2, lr_mult=1))
+    # layers.extend(Bn_Sc('deconv4', layers[-1].top[0]))
+    # layers.extend(Act('deconv4', layers[-1].top[0]))
+    layers.append(Bilinear_upsample('predict', 'deconv3', 1, 2, lr_mult=1))
+
+    if phase=='train':
+        # layers.append(Loss_python('loss', ['predict', 'gt'], loss=loss))
+        layers.extend(LossLayer('loss', ['predict', 'gt'], loss_type=loss))
+    elif phase=='deploy':
+        pass
+    else:
+        raise NotImplementedError
+
+    model.layer.extend(layers)
+    return model
+
 def v1_single_mscale_dp_resnet50(depth, batch, stops=1,height=600,width=800, loss='L1LossLayer',phase='train'):
     model = caffe_pb2.NetParameter()
     model.name = 'ResNet_{}'.format(depth)
@@ -1821,6 +1902,30 @@ def parse_weight(solver, pretrained_model, model_path, stops):
         print 'INFO:copy %s to %s' %('conv1', '_conv1')
         solver.net.params['1_conv1'] = weight
         solver.net.params['2_conv1'] = weight
+
+        for weight_name in weight_list:
+            weight_prefix = os.path.splitext(weight_name)[0]
+            if weight_prefix == 'conv1':
+                continue
+            for layer_name in all_layers:
+                if weight_prefix in layer_name and not '_activation' in layer_name:
+                    print 'INFO:copy %s to %s' %(weight_prefix, layer_name)
+                    weight = np.load(os.path.join(weight_dir, weight_name))
+                    solver.net.params[layer_name] = weight
+        # exit()
+    if 'v1_single_mscale_tripleres_resnet50':
+        # load conv param
+        print "load resnet50 param from pretrained."
+        all_layers = [n for n in solver.net._layer_names]
+        weight_dir = 'misc/resnet50_weight'
+        weight_list = os.listdir(weight_dir)
+
+        ## copy conv1
+        weight = np.load(os.path.join(weight_dir, 'conv1.npy'))
+        print 'INFO:copy %s to %s' %('conv1', '_conv1')
+        solver.net.params['1_conv1'] = weight
+        solver.net.params['2_conv1'] = weight
+        solver.net.params['3_conv1'] = weight
 
         for weight_name in weight_list:
             weight_prefix = os.path.splitext(weight_name)[0]

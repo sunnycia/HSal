@@ -384,7 +384,8 @@ def create_ldrstack_from_hdr(img, fstops_distance=1,
 
         tMin = -int(min_exposure)
         tMax = -int(max_exposure+4)
-        print tMin, tMax
+        print tMin, tMax,range(tMin, tMax, fstops_distance)
+
         range_list = np.array(range(tMin, tMax, fstops_distance), dtype=np.float32)
 
         stack_exposure=np.power(2, range_list)
@@ -417,7 +418,9 @@ def tonemapping(hdr, tmo_func='reinhard', gamma=2.2, fstop=0):
     elif tmo_func =='linear':
         output = hdr - hdr.min()
         output = output/output.max()
-        return output
+
+        # return output
+        return tonemapping(output,tmo_func='gamma')
     elif tmo_func =='gamma':
         inv_gamma=1.0/gamma
         exposure=np.power(2., fstop)
@@ -435,10 +438,10 @@ def tonemapping(hdr, tmo_func='reinhard', gamma=2.2, fstop=0):
 if __name__ == '__main__':
 
     ### test rgb2xyz
-    img_path='/data/SaliencyDataset/Image/HDREYE/images/HDR/C44.hdr'
-    hdr_img = imageio.imread(img_path)
-    xyz_adapt=cat(hdr_img)
-    lms=xyz2lms(xyz_adapt)
+    # img_path='/data/SaliencyDataset/Image/HDREYE/images/HDR/C44.hdr'
+    # hdr_img = imageio.imread(img_path)
+    # xyz_adapt=cat(hdr_img)
+    # lms=xyz2lms(xyz_adapt)
 
     # xyz_img = rgb2xyz(hdr_img)
     # rg,by,a=cam_dong(hdr_img)
@@ -447,19 +450,24 @@ if __name__ == '__main__':
     # cv2.imshow('yo',xyz_adapt/xyz_adapt.max())
     # cv2.waitKey(0)
 
-    ###test create_ldrstack_from_hdr
+    img_path='/data/SaliencyDataset/Image/HDREYE/images/HDR/C09.hdr'
+    img = imageio.imread(img_path)
+    ldr_stack, exposure_list = create_ldrstack_from_hdr(img, sampling_mode='uniform')
+    print exposure_list;
+    ##test create_ldrstack_from_hdr
     # temp_dir='temp'
     # if not os.path.isdir(temp_dir):
     #     os.makedirs(temp_dir)
 
     # # img_dir = '/data/SaliencyDataset/Image/ETHyma/images'
-    # img_dir = '/data/SaliencyDataset/Image/HDREYE/images/HDR'
+    # # img_dir = '/data/SaliencyDataset/Image/HDREYE/images/HDR'
+    # img_dir = '/data/SaliencyDataset/Image/ETHyma/images'
     # img_path_list = glob.glob(os.path.join(img_dir, '*.*'))
     # # img_path_list=['/data/SaliencyDataset/Image/HDREYE/images/HDR/C44.hdr']
     # for img_path in img_path_list:
     #     print 'processing',img_path
     #     img = imageio.imread(img_path)
-    #     ldr_stack, exposure_list = create_ldrstack_from_hdr(img)
+    #     ldr_stack, exposure_list = create_ldrstack_from_hdr(img, sampling_mode='uniform')
     #     for i in range(len(ldr_stack)):
     #         ldr = ldr_stack[i][:,:,::-1]
     #         save_path = os.path.join(temp_dir, os.path.splitext(os.path.basename(img_path))[0]+'_'+str(i)+'.jpg')
@@ -467,7 +475,6 @@ if __name__ == '__main__':
     #         cv2.imwrite(save_path, ldr*255)
     #         print save_path, 'saved.'
     
-
     ###test exposure splitting
     # hdr_img = imageio.imread('../C46_HDR.hdr')
     # image_list = split(hdr_img,stops=3)

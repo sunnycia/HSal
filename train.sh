@@ -22,13 +22,13 @@ PRE_MODEL=misc/ResNet-50-model.caffemodel
 # SNAPSHOT_DIR=snashot/v1_basic/2018091321:47:38
 # MODEL=v1_multi_1_max
 # MODEL=v2_multi_earlyconcat_vgg16
-MODEL=v1_single_mscale_resnet50
+MODEL=v1_single_mscale_tripleres_resnet50
 # MODEL=v1_single_mscale_rectified_resnet50
 # MODEL=v1_single_mscale_onedeconv_resnet50
 STOPS=1
-CS='lms'
-HEIGHT=448
-WIDTH=448
+CS='rgb'
+HEIGHT=384
+WIDTH=384
 BATCH=1
 
 
