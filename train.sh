@@ -7,7 +7,7 @@
 
 GPU=7
 ### comment this line if not in debug mode
-# DEBUG=1 
+DEBUG=1 
 
 ### choose a solver, SGD default
 SOLVER_TYPE=SGDSolver
@@ -23,6 +23,8 @@ PRE_MODEL=misc/ResNet-50-model.caffemodel
 # MODEL=v1_multi_1_max
 # MODEL=v2_multi_earlyconcat_vgg16
 MODEL=v1_single_mscale_tripleres_resnet50
+# MODEL=v1_single_mscale_tripleres_dialated_resnet50
+# MODEL=v1_single_pyramid_feature_resnet50
 # MODEL=v1_single_mscale_rectified_resnet50
 # MODEL=v1_single_mscale_onedeconv_resnet50
 STOPS=1
@@ -30,8 +32,6 @@ CS='rgb'
 HEIGHT=384
 WIDTH=384
 BATCH=1
-
-
 
 # LOSS=L1Loss
 # LOSS=L1Loss+KLDivLoss-1+1000
@@ -51,7 +51,7 @@ VAL_DS=salicon_val
 # VAL_DS=fddb_val
 
 # Training setting variable
-BASE_LR=0.0001
+BASE_LR=0.000001
 # BASE_LR=0.0000001
 LR_POLICY='inv'
 

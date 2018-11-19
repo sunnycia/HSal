@@ -2,8 +2,8 @@
 % clear;
 % delete(gcp);
 
-% matlabpool 5
-% parpool('local',5)
+% matlabpool 4
+% parpool(5)
 
 metricsFolder = '/data/sunnycia/hdr_works/source_code/hdr_saliency/training/metric_code/code4metric';
 addpath(genpath(metricsFolder))
@@ -62,7 +62,7 @@ saliencymap_path_list = natsortfiles({saliencymap_path_list.name})
 densitymap_path_list = natsortfiles({densitymap_path_list.name});
 fixationmap_path_list = natsortfiles({fixationmap_path_list.name});
 
-LengthFiles = length(fixationmap_path_list);
+LengthFiles = length(saliencymap_path_list);
 saliency_score_CC = zeros(1,LengthFiles);
 saliency_score_SIM = zeros(1,LengthFiles);
 saliency_score_JUD = zeros(1,LengthFiles);
@@ -75,6 +75,8 @@ saliency_score_NSS = zeros(1,LengthFiles);
 disp('calculate the metrics...');
 t1=clock;
 for j = 1 : LengthFiles
+% parfevalOnAll()
+% parallel.pool.constant()
 % parfor j=1:LengthFiles
     smap_path = char(fullfile(sal_dir,saliencymap_path_list(j)));
     density_path = char(fullfile(dens_dir,densitymap_path_list(j)));

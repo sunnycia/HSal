@@ -9,14 +9,24 @@
 # python fuse_exposure_salmap.py --dataset=hdreye --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-170000_norm+border+center --method=MINKOWSKI
 # 
 
-python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-80000_norm+border+center --method=GCW
-python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-90000_norm+border+center --method=GCW
-python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-110000_norm+border+center --method=GCW
-python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-120000_norm+border+center --method=GCW
-python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-130000_norm+border+center --method=GCW
-python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-140000_norm+border+center --method=GCW
-python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-160000_norm+border+center --method=GCW
-python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:12_iter-170000_norm+border+center --method=GCW
+
+python fuse_exposure_salmap.py --dataset=hdreye --model=ITTIKOCH --method=MINKOWSKI
+python fuse_exposure_salmap.py --dataset=hdreye --model=GBVS --method=MINKOWSKI
+python fuse_exposure_salmap.py --dataset=hdreye --model=SALICON --method=MINKOWSKI
+python fuse_exposure_salmap.py --dataset=hdreye --model=covsal --method=MINKOWSKI
+python fuse_exposure_salmap.py --dataset=hdreye --model=SAM --method=MINKOWSKI
+
+
+python fuse_exposure_salmap.py --dataset=ethyma --model=ITTIKOCH --method=MINKOWSKI
+python fuse_exposure_salmap.py --dataset=ethyma --model=GBVS --method=MINKOWSKI
+python fuse_exposure_salmap.py --dataset=ethyma --model=SALICON --method=MINKOWSKI
+python fuse_exposure_salmap.py --dataset=ethyma --model=covsal --method=MINKOWSKI
+python fuse_exposure_salmap.py --dataset=ethyma --model=SAM --method=MINKOWSKI
+
+
+# python fuse_exposure_salmap.py --dataset=ethyma --model=v1_single_mscale_tripleres_resnet50_2018110500:09:34_iter-120000_norm+border+center --method=MAX
+# python fuse_exposure_salmap.py --dataset=hdreye --model=v1_single_mscale_tripleres_resnet50_2018110500:09:34_iter-120000_norm+border+center --method=AVG
+# python fuse_exposure_salmap.py --dataset=hdreye --model=v1_single_mscale_tripleres_resnet50_2018110500:09:34_iter-120000_norm+border+center --method=MAX
 
 
 # python fuse_exposure_salmap.py --dataset=hdreye --model=SR --method=GCW

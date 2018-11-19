@@ -10,3 +10,7 @@ tmp_*
 *.solverstate
 *.npy
 history
+*.png
+*.jpg
+*.mat
+*.csv

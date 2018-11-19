@@ -25,6 +25,8 @@ def get_arguments():
     parser.add_argument('--width', type=int, help='image width')
     parser.add_argument('--height', type=int, help='image height')
 
+    parser.add_argument('--output_ori_size', type=int, default=0, help='image height')
+
     return parser.parse_args()
 
 print "Parsing arguments..."
@@ -83,6 +85,10 @@ for model_path in model_path_list:
         img_name = os.path.splitext(os.path.basename(ds.batch_frame_path_list[0]))[0]
         sm_name = img_name+'.jpg'
         sm_path = os.path.join(save_dir, sm_name)
+
+        if args.output_ori_size:
+            ori_size = cv2.imread(ds.batch_frame_path_list[0], 0).shape
+            sal_map = cv2.resize(sal_map, dsize=ori_size)
 
         cv2.imwrite(sm_path, sal_map)
         print sm_path, 'saved.'

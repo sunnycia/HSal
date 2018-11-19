@@ -78,9 +78,27 @@ def global_contrast_weighted_combine(prefix, sal_path_list, exposion_img_path_li
 
     return blank_img
 
+from matplotlib import pyplot as plt
+def plot_global_contrast_weight(prefix, sal_path_list, exposion_img_path_list):
+    exposion_img_path_list = exposion_img_path_list[:len(sal_path_list)]
+    assert(len(sal_path_list)==len(exposion_img_path_list))
+    sal_path_list.sort(key=mysort)
+    exposion_img_path_list.sort(key=mysort)
+
+    ## estimate contrast
+    contrast_list = []
+    for exposion_img_path in exposion_img_path_list:
+        print exposion_img_path
+        luminance_map = lum(cv2.imread(exposion_img_path)[:, :, ::-1])
+        contrast_list.append(np.std(luminance_map)/np.mean(luminance_map))
+    plt.plot([i for i in range(len(contrast_list))], contrast_list)
+    # plt.show()
+    output_name = prefix+'.png'
+    plt.savefig(output_name)
+
 # def local_contrast_weighted_combine(prefix, sal_path_list, exposion_img_path_list, patch_size=(80,80), downsize=(800,800)):
 #     for i in range()
-    
+
 if __name__ =='__main__':
 
     parser=argparse.ArgumentParser()
@@ -137,6 +155,9 @@ if __name__ =='__main__':
             fusion_img = minkowski(cur_sal_path_list)  
         elif fusion_mode=='GCW':
             fusion_img = global_contrast_weighted_combine(prefix, cur_sal_path_list, cur_exposion_path_list)
+        elif fusion_mode=='GCW_PLOT':
+            plot_global_contrast_weight(prefix, cur_sal_path_list, cur_exposion_path_list)
+            continue
         elif fusion_mode=='LCW':
             fusion_img = global_contrast_weighted_combine(prefix, cur_sal_path_list, cur_exposion_path_list)
         else:
