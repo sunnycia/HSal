@@ -8,5 +8,5 @@ power: 0.75
 momentum: 0.899999976158
 weight_decay: 9.99999974738e-05
 snapshot: 10000
-snapshot_prefix: "snapshot/v1_single_mscale_tripleres_resnet50_debug/2018111509:34:59/snapshot_"
+snapshot_prefix: "snapshot/v1_single_mscale_tripleres_resnet50_debug/2018111921:58:29/snapshot_"
 solver_mode: GPU

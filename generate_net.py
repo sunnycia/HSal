@@ -13,10 +13,6 @@ import caffe
 from caffe.proto import caffe_pb2
 from caffe_basic_module.caffe_basic_module import *
 
-python_loss_list = ['L1LossLayer', 'KLLossLayer', 'sKLLossLayer', 'iKLLossLayer', 'GBDLossLayer']
-cpp_loss_list = ['KLDivLoss', 'EuclideanLoss', 'L1Loss', 'SigmoidCrossEntropyLoss', 'SoftmaxWithLoss']
-
-
 configs = {
     50: [3, 4, 6, 3],
     101: [3, 4, 23, 3],
