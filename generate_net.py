@@ -74,6 +74,7 @@ def v1_origin(depth, batch, stops,height=600,width=800, loss='L1LossLayer',phase
     layers.extend(Bn_Sc('conv1', layers[-1].top[0], True))
     layers.extend(Act('conv1', layers[-1].top[0]))
     layers.append(Pool('pool1', layers[-1].top[0], 'max', 3, 2, 0))
+    
     layers.extend(ResLayer('res2', layers[-1].top[0], num[0], 64, 1, 'first'))
     layers.extend(ResLayer('res3', layers[-1].top[0], num[1], 128, 2))
     layers.extend(ResLayer('res4', layers[-1].top[0], num[2], 256, 2))
